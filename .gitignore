@@ -1,0 +1,6 @@
+# builds
+/bin/
+/obj/
+
+/plan/original_script/
+open_in_vsc.txt
