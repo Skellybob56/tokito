@@ -1,23 +1,31 @@
 ﻿
 using System.Diagnostics;
-using System.Xml;
 
 namespace Tokito;
 
 internal static class Program
 {
+    [Flags]
+    enum Spacing : byte
+    {
+        None = 0,
+        Pre = 1,
+        Post = 2,
+        Bracket = 4
+    }
+    
     // todo: add options for how lossy encoding should be
-    static byte[] Tokenize(string text, string[] words, char[] punctuation)
+    static byte[] Tokenize(string text, string[] words, (char character, Spacing spacing)[] punctuation)
     {
         static byte ParseCurrentWord(string currentWord, string[] words)
         {
             // todo: add safety for cases where the word is unknown
             return (byte) words.IndexOf(currentWord);
         }
-        static byte ParsePunctuation(char character, int wordsLength, char[] punctuation)
+        static byte ParsePunctuation(char character, int wordsLength, (char character, Spacing spacing)[] punctuation)
         {
-            // todo: add safety for cases where the word is unknown
-            return (byte)(wordsLength + punctuation.IndexOf(character));
+            // todo: add safety for cases where the symbol is unknown
+            return (byte)(wordsLength + Array.FindIndex(punctuation, p => p.character == character));
         }
 
         if (words.Length + punctuation.Length > byte.MaxValue)
@@ -39,7 +47,7 @@ internal static class Program
                     tokens.Add(ParseCurrentWord(currentWord, words));
                     currentWord = "";
                 }
-                if (punctuation.Contains(character))
+                if (punctuation.Any(p => p.character == character))
                 {
                     tokens.Add(ParsePunctuation(character, words.Length, punctuation));
                 }
@@ -51,7 +59,7 @@ internal static class Program
         return tokens.ToArray();
     }
 
-    static string Detokenize(byte[] tokens, string[] words, char[] punctuation)
+    static string Detokenize(byte[] tokens, string[] words, (char character, Spacing spacing)[] punctuation)
     {
         string output = "";
 
@@ -59,7 +67,7 @@ internal static class Program
         {
             // todo: add safety to ensure that the index isn't greater than the length of punctuation and words combined
             // todo: add automatic spacing to words and punctuation. this can be done by having each punctuation mark also store an enum for what spacing it uses.
-            output += index < words.Length ? words[index] : punctuation[index - words.Length];
+            output += index < words.Length ? words[index] : punctuation[index - words.Length].character;
             output += ' '; // temp spacer
         }
 
@@ -126,7 +134,8 @@ internal static class Program
         // todo: load these from data files
         string text = "nasin lete\n\nlon tenpo lete la jan mute li tawa kepeken ilo suli.\ntaso mi tawa kepeken noka. mi jo ala e ilo tawa suli. mi sona ala kepeken ilo tawa suli.\nko walo li kama tan sewi la jan pali pi kulupu lawa ma li weka e ko walo tan nasin ilo kepeken tenpo lili. ike la, jan pali sama li weka ala e ko tan nasin pi tawa noka.\nmi jan tawa nanpa wan la mi o pali e nasin kepeken noka mi a!\ntaso tenpo mute la mi jan tawa nanpa wan ala. mi ken tawa lon nasin ni: jan ante li tawa lon tenpo pini.\nmi pilin pona tan ni: jan ante mute li sama mi li tawa noka lon tenpo lete. kulupu lawa li pali sama ni: mi lon ala. taso mi ale li lon li awen tawa kepeken noka a!\n";
         string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "pu", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
-        char[] punctuation = ['\n', '.', ',', ':', '"', '?', '!', '\''];
+        // todo: make SpacedChar struct to improve readability 
+        (char character, Spacing spacing)[] punctuation = [('\n', Spacing.None), ('.', Spacing.Post), (',', Spacing.Post), (':', Spacing.Post), ('"', Spacing.Bracket), ('?', Spacing.Post), ('!', Spacing.Post), ('\'', Spacing.Bracket)];
 
         byte[] tokens = Tokenize(text, words, punctuation);
         byte[] compressed = Compress(tokens, 256 - (words.Length + punctuation.Length));
