@@ -14,6 +14,11 @@ internal static class Program
             // todo: add safety for cases where the word is unknown
             return (byte) words.IndexOf(currentWord);
         }
+        static byte ParsePunctuation(char character, int wordsLength, char[] punctuation)
+        {
+            // todo: add safety for cases where the word is unknown
+            return (byte)(wordsLength + punctuation.IndexOf(character));
+        }
 
         if (words.Length + punctuation.Length > byte.MaxValue)
         { throw new ArgumentException("The current format does not allow for more than 256 total words and punctuation", nameof(words) + ", " + nameof(punctuation)); }
@@ -36,8 +41,7 @@ internal static class Program
                 }
                 if (punctuation.Contains(character))
                 {
-                    // todo: add safety for cases where the character is unknown
-                    tokens.Add((byte)(words.Length + punctuation.IndexOf(character)));
+                    tokens.Add(ParsePunctuation(character, words.Length, punctuation));
                 }
             }
         }
