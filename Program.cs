@@ -1,5 +1,6 @@
 ﻿
 using System.Diagnostics;
+using System.Text;
 
 namespace Tokito;
 
@@ -61,17 +62,37 @@ internal static class Program
 
     static string Detokenize(byte[] tokens, string[] words, (char character, Spacing spacing)[] punctuation)
     {
-        string output = "";
+        StringBuilder output = new();
 
+        bool spaceBeforeNextWord = false;
         foreach (byte index in tokens)
         {
-            // todo: add safety to ensure that the index isn't greater than the length of punctuation and words combined
-            // todo: add automatic spacing to words and punctuation. this can be done by having each punctuation mark also store an enum for what spacing it uses.
-            output += index < words.Length ? words[index] : punctuation[index - words.Length].character;
-            output += ' '; // temp spacer
+            bool isWord = index < words.Length;
+
+            if (isWord)
+            {
+                if (spaceBeforeNextWord)
+                {
+                    output.Append(' ');
+                }
+                output.Append(words[index]);
+                spaceBeforeNextWord = true;
+            }
+            else
+            {
+                // todo: add safety to ensure that the index isn't greater than the length of punctuation and words combined
+                (char character, Spacing spacing) currentPunctuation = punctuation[index - words.Length];
+
+                // todo: add spacing logic for Spacing.Bracket
+                output.Append(currentPunctuation.character);
+
+                if (currentPunctuation.spacing == Spacing.Post)
+                { spaceBeforeNextWord = true; }
+                else { spaceBeforeNextWord = false; }
+            }
         }
 
-        return output;
+        return output.ToString();
     }
 
     static (byte[] tokens, (byte p1, byte p2)[] pairs) PairEncode(byte[] tokens, int maximumPairCount)
