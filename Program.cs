@@ -28,8 +28,8 @@ internal static class Program
             return (byte)(wordsLength + Array.FindIndex(punctuation, p => p.character == character));
         }
 
-        if (words.Length + punctuation.Length > byte.MaxValue)
-        { throw new ArgumentException("The current format does not allow for more than 256 total words and punctuation", nameof(words) + ", " + nameof(punctuation)); }
+        if (words.Length + punctuation.Length > byte.MaxValue + 1) // todo: consider replacing many of these exceptions with debug asserts
+        { throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total words and punctuation", nameof(words) + ", " + nameof(punctuation)); }
 
         List<byte> tokens = [];
         
