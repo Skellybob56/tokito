@@ -99,7 +99,9 @@ internal static class Program
     {
         // todo: implement pseudocode (this currently just applies no encoding)
 
-        byte maximumPairCount = (byte)(256 - minimumPairIndex); // todo: add safety for this
+        if (minimumPairIndex == 0) { throw new ArgumentOutOfRangeException(nameof(minimumPairIndex), "Cannot be zero"); }
+
+        byte maximumPairCount = (byte)(256 - minimumPairIndex);
 
         List<(byte p1, byte p2)> pairs = [];
         LinkedList<byte> linkedTokens = new(tokens); // todo: consider making this a linked list earlier in the process
