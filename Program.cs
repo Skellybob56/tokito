@@ -131,8 +131,11 @@ internal static class Program
 
     static void Main()
     {
+        string textPath = "nasin_lete.txt";
+        
+        string text = File.ReadAllText(textPath);
+
         // todo: load these from data files
-        string text = "nasin lete\n\nlon tenpo lete la jan mute li tawa kepeken ilo suli.\ntaso mi tawa kepeken noka. mi jo ala e ilo tawa suli. mi sona ala kepeken ilo tawa suli.\nko walo li kama tan sewi la jan pali pi kulupu lawa ma li weka e ko walo tan nasin ilo kepeken tenpo lili. ike la, jan pali sama li weka ala e ko tan nasin pi tawa noka.\nmi jan tawa nanpa wan la mi o pali e nasin kepeken noka mi a!\ntaso tenpo mute la mi jan tawa nanpa wan ala. mi ken tawa lon nasin ni: jan ante li tawa lon tenpo pini.\nmi pilin pona tan ni: jan ante mute li sama mi li tawa noka lon tenpo lete. kulupu lawa li pali sama ni: mi lon ala. taso mi ale li lon li awen tawa kepeken noka a!\n";
         string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "pu", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
         // todo: make SpacedChar struct to improve readability 
         (char character, Spacing spacing)[] punctuation = [('\n', Spacing.None), ('.', Spacing.Post), (',', Spacing.Post), (':', Spacing.Post), ('"', Spacing.Bracket), ('?', Spacing.Post), ('!', Spacing.Post), ('\'', Spacing.Bracket)];
@@ -140,7 +143,9 @@ internal static class Program
         byte[] tokens = Tokenize(text, words, punctuation);
         byte[] compressed = Compress(tokens, 256 - (words.Length + punctuation.Length));
 
-        Console.WriteLine(Detokenize(tokens, words, punctuation));
+        File.WriteAllBytes($"{textPath}.toki", compressed);
+
+        Console.WriteLine(Detokenize(tokens, words, punctuation)); // todo: add Decompress function and convert back from the compressed data
 
         Console.Read(); // pause until enter
     }
