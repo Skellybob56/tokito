@@ -95,12 +95,14 @@ internal static class Program
         return output.ToString();
     }
 
-    static (byte[] tokens, (byte p1, byte p2)[] pairs) PairEncode(byte[] tokens, int maximumPairCount)
+    static (byte[] tokens, (byte p1, byte p2)[] pairs) PairEncode(byte[] tokens, byte minimumPairIndex)
     {
         // todo: implement pseudocode (this currently just applies no encoding)
 
+        byte maximumPairCount = (byte)(256 - minimumPairIndex); // todo: add safety for this
+
         List<(byte p1, byte p2)> pairs = [];
-        LinkedList<byte> linkedTokens = new(tokens);
+        LinkedList<byte> linkedTokens = new(tokens); // todo: consider making this a linked list earlier in the process
 
         while (true)
         {
@@ -138,16 +140,27 @@ internal static class Program
         return header;
     }
 
-    static byte[] Compress(byte[] tokens, int maximumPairCount)
+    static byte[] Compress(byte[] tokens, byte? minimumPairIndex)
     {
-        (tokens, (byte p1, byte p2)[] pairs) = PairEncode(tokens, maximumPairCount);
-        byte[] header = GenerateHeader(pairs);
+        if (minimumPairIndex is not null)
+        {
+            (tokens, (byte p1, byte p2)[] pairs) = PairEncode(tokens, minimumPairIndex.Value);
+            byte[] header = GenerateHeader(pairs);
 
-        byte[] compressed = new byte[header.Length + tokens.Length];
-        header.CopyTo(compressed, 0);
-        tokens.CopyTo(compressed, header.Length);
+            byte[] compressed = new byte[header.Length + tokens.Length];
+            header.CopyTo(compressed, 0);
+            tokens.CopyTo(compressed, header.Length);
 
-        return compressed;
+            return compressed;
+        }
+        else
+        {
+            byte[] compressed = new byte[tokens.Length + 1];
+            compressed[0] = 0;
+            tokens.CopyTo(compressed, 1);
+
+            return compressed;
+        }
     }
 
     static void Main()
@@ -162,7 +175,7 @@ internal static class Program
         (char character, Spacing spacing)[] punctuation = [('\n', Spacing.None), ('.', Spacing.Post), (',', Spacing.Post), (':', Spacing.Post), ('"', Spacing.Bracket), ('?', Spacing.Post), ('!', Spacing.Post), ('\'', Spacing.Bracket)];
 
         byte[] tokens = Tokenize(text, words, punctuation);
-        byte[] compressed = Compress(tokens, 256 - (words.Length + punctuation.Length));
+        byte[] compressed = Compress(tokens, (byte)(words.Length + punctuation.Length));
 
         File.WriteAllBytes($"{textPath}.toki", compressed);
 
