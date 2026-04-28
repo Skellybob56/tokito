@@ -6,16 +6,16 @@ namespace Tokito;
 
 internal static class Program
 {
-    [Flags]
     enum Spacing : byte
     {
-        None = 0,
-        Pre = 1,
-        Post = 2,
-        Bracket = 4
+        None,
+        Post,
+        Bracket
     }
     
     // todo: add options for how lossy encoding should be
+    // todo: add capability for encoding losslessly (part of this will be introducing special control characters)
+    // todo: consider swapping the order of punctuation and words in the index encoding as punctuation is more stable and more stable tokens should have lower indices
     static byte[] Tokenize(string text, string[] words, (char character, Spacing spacing)[] punctuation)
     {
         static byte ParseCurrentWord(string currentWord, string[] words)
