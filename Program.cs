@@ -110,7 +110,15 @@ internal static class Program
         {
             // if there are no spaces for additional pairs: break the loop
             if (pairs.Count == maximumPairCount) { break; }
-            Debug.Assert(pairs.Count <= maximumPairCount);
+
+            // find the frequency of all adjecent token pairs
+            // todo: only calculate this once and then use partial updating on pair replacement
+            int[] pairFrequency = new int[minimumPairIndex * minimumPairIndex]; // todo: consider a denser format because this array can be huge
+            for (LinkedListNode<byte>? node = linkedTokens.First; node is not null && node.Next is not null; node = node.Next)
+            {
+                int index = node.Value + (minimumPairIndex * node.Next.Value);
+                pairFrequency[index]++;
+            }
 
             // find the most common adjacent token pair
 
