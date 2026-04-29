@@ -95,10 +95,9 @@ internal static class Program
         return output.ToString();
     }
 
+    // todo: make a BytePair struct to simplify syntax - replace `(byte p1, byte p2)`
     static (byte[] tokens, (byte p1, byte p2)[] pairs) PairEncode(byte[] tokens, byte minimumPairIndex)
     {
-        // todo: implement pseudocode (this currently just applies no encoding)
-
         if (minimumPairIndex == 0) { throw new ArgumentOutOfRangeException(nameof(minimumPairIndex), "Cannot be zero"); }
 
         byte maximumPairCount = (byte)(256 - minimumPairIndex);
@@ -106,29 +105,63 @@ internal static class Program
         List<(byte p1, byte p2)> pairs = [];
         LinkedList<byte> linkedTokens = new(tokens); // todo: consider making this a linked list earlier in the process
 
-        while (true)
         {
-            // if there are no spaces for additional pairs: break the loop
-            if (pairs.Count == maximumPairCount) { break; }
+            int[] pairFrequency = new int[256 * 256]; // warning: large array
 
             // find the frequency of all adjecent token pairs
-            // todo: only calculate this once and then use partial updating on pair replacement
-            int[] pairFrequency = new int[minimumPairIndex * minimumPairIndex]; // todo: consider a denser format because this array can be huge
             for (LinkedListNode<byte>? node = linkedTokens.First; node is not null && node.Next is not null; node = node.Next)
             {
-                int index = node.Value + (minimumPairIndex * node.Next.Value);
+                int index = node.Value * 256 + node.Next.Value;
                 pairFrequency[index]++;
             }
 
-            // find the most common adjacent token pair
-
-            // if the most common pair's frequency is less than three: break the loop
-            if (true)
+            while (pairs.Count < maximumPairCount)
             {
-                break;
-            }
+                // find the most common adjacent token pair
+                int mostCommonPairIndex = 0;
+                int greatestFrequency = pairFrequency[0];
+                for (int i = 1; i < pairFrequency.Length; i++) // this could avoid iterating over the sections known to be empty if there is a performance concern
+                {
+                    if (greatestFrequency < pairFrequency[i])
+                    {
+                        mostCommonPairIndex = i;
+                        greatestFrequency = pairFrequency[i];
+                    }
+                }
 
-            // add the pair to a pair list and replace all instances of the pair in the tokens array
+                // if the most common pair's frequency is less than three: break the loop (too infrequent for useful compression)
+                if (greatestFrequency < 3) { break; }
+
+                // add the pair to a pair list
+                (byte p1, byte p2) mostCommonPair = ((byte)(mostCommonPairIndex >> 8), (byte)mostCommonPairIndex);
+                byte pairToken = (byte)(minimumPairIndex + pairs.Count); // todo: check if safe
+                pairs.Add(mostCommonPair);
+
+                // replace all instances of the pair in the tokens array and do a partial update of the frequency table for pairs with relation to one of the bytes that have been updated
+                for (LinkedListNode<byte>? node = linkedTokens.First; node is not null && node.Next is not null; node = node.Next)
+                {
+                    if (node.Value == mostCommonPair.p1 && node.Next.Value == mostCommonPair.p2) // pair hit
+                    {
+                        // update pairFrequency
+                        if (node.Previous is not null)
+                        {
+                            pairFrequency[node.Previous.Value * 256 + node.Value]--;
+                            pairFrequency[node.Previous.Value * 256 + pairToken]++;
+                        }
+                        if (node.Next.Next is not null)
+                        {
+                            pairFrequency[node.Next.Value * 256 + node.Next.Next.Value]--;
+                            pairFrequency[pairToken * 256 + node.Next.Next.Value]++;
+                        }
+                        
+                        // update linkedTokens with the pair compresison
+                        node.Value = pairToken;
+                        linkedTokens.Remove(node.Next);
+                    }
+                }
+                // zero the frequency of the replaced pair
+                pairFrequency[mostCommonPair.p1 * 256 + mostCommonPair.p2] = 0;
+            }
         }
 
         return (linkedTokens.ToArray(), pairs.ToArray());
