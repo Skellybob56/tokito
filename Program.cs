@@ -134,7 +134,7 @@ internal static class Program
 
                 // add the pair to a pair list
                 (byte p1, byte p2) mostCommonPair = ((byte)(mostCommonPairIndex >> 8), (byte)mostCommonPairIndex);
-                byte pairToken = (byte)(minimumPairIndex + pairs.Count); // todo: check if safe
+                byte pairToken = (byte)(minimumPairIndex + pairs.Count);
                 pairs.Add(mostCommonPair);
 
                 // replace all instances of the pair in the tokens array and do a partial update of the frequency table for pairs with relation to one of the bytes that have been updated
@@ -206,6 +206,34 @@ internal static class Program
         }
     }
 
+    static byte[] Decompress(byte[] compressed, byte? minimumPairIndex)
+    {
+        // if no pairs, just remove the initial 'zero pairs' byte and return
+        if (minimumPairIndex is null) { return compressed[1..]; }
+
+        // unpack pairs array
+        (byte p1, byte p2)[] pairs = new (byte p1, byte p2)[compressed[0]];
+        for (int i = 0; i < pairs.Length; i++)
+        { pairs[i] = (compressed[2*i + 1], compressed[2 * i + 2]); }
+
+        // todo: check if any pairs are invalid (e.g. circularity)
+
+        LinkedList<byte> linkedTokens = new(compressed[(1 + pairs.Length*2)..]);
+
+        for (LinkedListNode<byte>? node = linkedTokens.First; node is not null; )
+        {
+            if (node.Value >= minimumPairIndex)
+            {
+                (byte p1, byte p2) pair = pairs[node.Value - minimumPairIndex.Value];
+                node.Value = pair.p1;
+                linkedTokens.AddAfter(node, pair.p2);
+            }
+            else { node = node.Next; } // only progress when not spliting a pair
+        }
+
+        return linkedTokens.ToArray();
+    }
+
     static void Main()
     {
         string textPath = "nasin_lete.txt";
@@ -217,12 +245,14 @@ internal static class Program
         // todo: make SpacedChar struct to improve readability 
         (char character, Spacing spacing)[] punctuation = [('\n', Spacing.None), ('.', Spacing.Post), (',', Spacing.Post), (':', Spacing.Post), ('"', Spacing.Bracket), ('?', Spacing.Post), ('!', Spacing.Post), ('\'', Spacing.Bracket)];
 
+        byte? minimumPairIndex = (byte)(words.Length + punctuation.Length);
+        
         byte[] tokens = Tokenize(text, words, punctuation);
-        byte[] compressed = Compress(tokens, (byte)(words.Length + punctuation.Length));
+        byte[] compressed = Compress(tokens, minimumPairIndex);
 
         File.WriteAllBytes($"{textPath}.toki", compressed);
 
-        Console.WriteLine(Detokenize(tokens, words, punctuation)); // todo: add Decompress function and convert back from the compressed data
+        Console.WriteLine(Detokenize(Decompress(compressed, minimumPairIndex), words, punctuation));
 
         Console.Read(); // pause until enter
     }
