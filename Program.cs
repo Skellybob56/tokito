@@ -20,13 +20,10 @@ internal static class Program
     {
         static byte ParseCurrentWord(string currentWord, string[] words)
         {
-            // todo: add safety for cases where the word is unknown
-            return (byte) words.IndexOf(currentWord);
-        }
-        static byte ParsePunctuation(char character, int wordsLength, (char character, Spacing spacing)[] punctuation)
-        {
-            // todo: add safety for cases where the symbol is unknown
-            return (byte)(wordsLength + Array.FindIndex(punctuation, p => p.character == character));
+            if (words.Contains(currentWord))
+            { return (byte) words.IndexOf(currentWord); }
+
+            throw new NotImplementedException("unknown word");
         }
 
         if (words.Length + punctuation.Length > byte.MaxValue + 1) // todo: consider replacing many of these exceptions with debug asserts
@@ -48,9 +45,14 @@ internal static class Program
                     tokens.Add(ParseCurrentWord(currentWord, words));
                     currentWord = "";
                 }
+
                 if (punctuation.Any(p => p.character == character))
                 {
-                    tokens.Add(ParsePunctuation(character, words.Length, punctuation));
+                    tokens.Add((byte)(words.Length + Array.FindIndex(punctuation, p => p.character == character)));
+                }
+                else
+                {
+                    throw new NotImplementedException("unknown symbol"); // causes a feature regression but is more honest. this regression is needed for future lossless encoding
                 }
             }
         }
@@ -156,7 +158,7 @@ internal static class Program
                         
                         // update linkedTokens with the pair compresison
                         node.Value = pairToken;
-                        linkedTokens.Remove(node.Next);
+                        linkedTokens.Remove(node.Next); // after this, node.Next may be null
                     }
                 }
                 // zero the frequency of the replaced pair
@@ -236,7 +238,7 @@ internal static class Program
 
     static void Main()
     {
-        string textPath = "nasin_lete.txt";
+        string textPath = "aseki_laso_en_jan_utala_lipu_wan.txt";
         
         string text = File.ReadAllText(textPath);
 
