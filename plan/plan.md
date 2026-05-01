@@ -8,6 +8,34 @@ If a document written using only these characters is encoded, it will be decoded
 
 From here, what we can do is scan every character while encoding the file. If the character is a punctuation point, the 'current token' (prior, unaccounted for string) is appended to tokens (after some sanitisation) and the punctuation mark is appended to tokens. Certain punctuation points have custom functions such as the space not appending itself to. Else, if the character is a capital, mark the current token as a name. If it is a capital or not, concatenate the char to the end of the current token.
 
+## tokenised format
+[escape codes] [punctuation] [words] [pairs]
+
+### escape codes
+0x00 - initally capitalised toki pona syllable list (and space suppressor)
+0x01 - initally lowercase toki pona syllable list (and space suppressor)
+0x02 - UTF text
+
+#### initally capitalised toki pona syllable list (and space suppressor)
+[capitalised space] [lowercase space] [syllables] [0xFE - space supressor] [0xFF - end string]
+ - the first syllable is capitalised
+ - encodes all 92 valid syllables
+ - has two types of spaces that either capitalise or don't capitalise the following syllable
+ - has a key that ends the string and supresses the automatic spacing applied by the following token
+ - has a normal end string key
+
+#### initally lowercase toki pona syllable list (and space suppressor)
+[capitalised space] [lowercase space] [syllables] [0xFE - space supressor] [0xFF - end string]
+ - the first syllable is lowercase
+ - encodes all 92 valid syllables
+ - has two types of spaces that either capitalise or don't capitalise the following syllable
+ - has a key that ends the string and supresses the automatic spacing applied by the following token
+ - has a normal end string key
+
+#### UTF text
+- followed by a length byte for the UTF-8 string length
+- if that length byte is 0x00, UTF-16 is selected. after this, there is another length byte for the UTF-16 string length
+
 ## function sections
 Text
 Tokens
@@ -17,3 +45,4 @@ Header + Bytes
 ## far future possibilities
 Use non-byte-aligned compression such as Huffman encoding or even non-bit-aligned encoding such as arithmetic encoding.
 Use an understanding of toki pona grammar to improve compression.
+With aritmetic encoding, you could also use per-file token pair coding and store the number of pairs using arithmetically coded unary (1 is much lower precision than 0)
