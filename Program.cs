@@ -6,17 +6,10 @@ namespace Tokito;
 
 internal static class Program
 {
-	enum Spacing : byte
-	{
-		None,
-		Post,
-		Bracket
-	}
-	
 	// todo: add options for how lossy encoding should be
 	// todo: add capability for encoding losslessly (part of this will be introducing special control characters)
 	// todo: consider swapping the order of punctuation and words in the index encoding as punctuation is more stable and more stable tokens should have lower indices
-	static byte[] Tokenize(string text, string[] words, (char character, Spacing spacing)[] punctuation)
+	static byte[] Tokenize(string text, string[] words, (char character, bool spaced)[] punctuation)
 	{
 		static byte ParseCurrentWord(string currentWord, string[] words)
 		{
@@ -46,7 +39,13 @@ internal static class Program
 					currentWord = "";
 				}
 
-				if (punctuation.Any(p => p.character == character))
+				if (character == ' ')
+				{
+					// todo: check if this space is predicted: if not then add the missing space as a token
+					// todo: also check if a space is predicted in an area where there should be no space and use some method to supress it. example: 'ona.mi'
+				}
+				else if (character == '\r') { } // silently ignores \r
+				else if (punctuation.Any(p => p.character == character))
 				{
 					tokens.Add((byte)(words.Length + Array.FindIndex(punctuation, p => p.character == character)));
 				}
@@ -62,7 +61,7 @@ internal static class Program
 		return tokens.ToArray();
 	}
 
-	static string Detokenize(byte[] tokens, string[] words, (char character, Spacing spacing)[] punctuation)
+	static string Detokenize(byte[] tokens, string[] words, (char character, bool spaced)[] punctuation)
 	{
 		StringBuilder output = new();
 
@@ -83,14 +82,12 @@ internal static class Program
 			else
 			{
 				// todo: add safety to ensure that the index isn't greater than the length of punctuation and words combined
-				(char character, Spacing spacing) currentPunctuation = punctuation[index - words.Length];
+				(char character, bool spaced) currentPunctuation = punctuation[index - words.Length];
 
 				// todo: add spacing logic for Spacing.Bracket
 				output.Append(currentPunctuation.character);
 
-				if (currentPunctuation.spacing == Spacing.Post)
-				{ spaceBeforeNextWord = true; }
-				else { spaceBeforeNextWord = false; }
+				spaceBeforeNextWord = currentPunctuation.spaced;
 			}
 		}
 
@@ -105,10 +102,10 @@ internal static class Program
 		byte maximumPairCount = (byte)(256 - minimumPairIndex);
 
 		List<(byte p1, byte p2)> pairs = [];
-		LinkedList<byte> linkedTokens = new(tokens); // todo: consider making this a linked list earlier in the process
+		LinkedList<byte> linkedTokens = new(tokens); // perf: this could be replaced with a byte?[] array where removed bytes are just nulled - would improve caching
 
 		{
-			int[] pairFrequency = new int[256 * 256]; // warning: large array
+			int[] pairFrequency = new int[256 * 256]; // warning - large array
 
 			// find the frequency of all adjecent token pairs
 			for (LinkedListNode<byte>? node = linkedTokens.First; node is not null && node.Next is not null; node = node.Next)
@@ -122,7 +119,7 @@ internal static class Program
 				// find the most common adjacent token pair
 				int mostCommonPairIndex = 0;
 				int greatestFrequency = pairFrequency[0];
-				for (int i = 1; i < pairFrequency.Length; i++) // this could avoid iterating over the sections known to be empty if there is a performance concern
+				for (int i = 1; i < pairFrequency.Length; i++) // perf: this could avoid iterating over the sections known to be empty
 				{
 					if (greatestFrequency < pairFrequency[i])
 					{
@@ -220,7 +217,7 @@ internal static class Program
 
 		// todo: check if any pairs are invalid (e.g. circularity)
 
-		LinkedList<byte> linkedTokens = new(compressed[(1 + pairs.Length*2)..]);
+		LinkedList<byte> linkedTokens = new(compressed[(1 + pairs.Length*2)..]); // perf: instead of a linked list, we could check the depth of all pairs and precalcualte final array size and then decompress into this final array - would improve caching
 
 		for (LinkedListNode<byte>? node = linkedTokens.First; node is not null; )
 		{
@@ -238,14 +235,14 @@ internal static class Program
 
 	static void Main()
 	{
-		string textPath = "aseki_laso_en_jan_utala_lipu_wan.txt";
+		string textPath = "nasin_lete.txt";
 		
 		string text = File.ReadAllText(textPath);
 
 		// todo: load these from data files
 		string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "pu", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
 		// todo: make SpacedChar struct to improve readability 
-		(char character, Spacing spacing)[] punctuation = [('\n', Spacing.None), ('.', Spacing.Post), (',', Spacing.Post), (':', Spacing.Post), ('"', Spacing.Bracket), ('?', Spacing.Post), ('!', Spacing.Post), ('\'', Spacing.Bracket)];
+		(char character, bool spaced)[] punctuation = [('\n', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
 
 		byte? minimumPairIndex = (byte)(words.Length + punctuation.Length);
 		
