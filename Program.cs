@@ -13,11 +13,16 @@ internal static class Program
 
 		
 		byte[] tokens = TokiCodex.Tokenize(text);
-		byte[] compressed = ByteCodex.Compress(tokens, TokiCodex.minimumPairIndex);
+		byte[] compressed = ByteCodex.Compress((byte[])tokens.Clone(), TokiCodex.minimumPairIndex);
 
 		File.WriteAllBytes($"{textPath}.toki", compressed);
 
-		Console.WriteLine(TokiCodex.Detokenize(ByteCodex.Decompress(compressed, TokiCodex.minimumPairIndex)));
+		Console.WriteLine("Done!");
+
+		byte[] decompressed = ByteCodex.Decompress(compressed, TokiCodex.minimumPairIndex);
+		
+		Debug.Assert(decompressed.SequenceEqual(tokens), "Decompressed data should be equivalent to the original tokens");
+		Debug.Assert(TokiCodex.Detokenize(tokens) == text, "Untokenized tokens should be equivalent to the original text");
 
 		Console.Read(); // pause until enter
 	}
