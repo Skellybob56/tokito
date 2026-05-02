@@ -9,18 +9,21 @@ internal static class Program
 	// todo: add options for how lossy encoding should be
 	// todo: add capability for encoding losslessly (part of this will be introducing special control characters)
 	// todo: consider swapping the order of punctuation and words in the index encoding as punctuation is more stable and more stable tokens should have lower indices
-	static byte[] Tokenize(string text, string[] words, (char character, bool spaced)[] punctuation)
+	const int escapeCodeCount = 4; // todo: split tokenizer into its own class to encapsulate this const
+
+	// todo: implement escape codes
+	static byte[] Tokenize(string text, (char character, bool spaced)[] punctuation, string[] words)
 	{
-		static byte ParseCurrentWord(string currentWord, string[] words)
+		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
+		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
+
+		static byte ParseCurrentWord(string currentWord, int punctuationLength, string[] words)
 		{
 			if (words.Contains(currentWord))
-			{ return (byte) words.IndexOf(currentWord); }
+			{ return (byte) (escapeCodeCount + punctuationLength + words.IndexOf(currentWord)); }
 
 			throw new NotImplementedException("unknown word");
 		}
-
-		if (words.Length + punctuation.Length > byte.MaxValue + 1) // todo: consider replacing many of these exceptions with debug asserts
-		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total words and punctuation", nameof(words) + ", " + nameof(punctuation)); }
 
 		List<byte> tokens = [];
 		
@@ -35,7 +38,7 @@ internal static class Program
 			{
 				if (currentWord != "")
 				{
-					tokens.Add(ParseCurrentWord(currentWord, words));
+					tokens.Add(ParseCurrentWord(currentWord, punctuation.Length, words));
 					currentWord = "";
 				}
 
@@ -47,7 +50,7 @@ internal static class Program
 				else if (character == '\r') { } // silently ignores \r
 				else if (punctuation.Any(p => p.character == character))
 				{
-					tokens.Add((byte)(words.Length + Array.FindIndex(punctuation, p => p.character == character)));
+					tokens.Add((byte)(escapeCodeCount + Array.FindIndex(punctuation, p => p.character == character)));
 				}
 				else
 				{
@@ -56,38 +59,43 @@ internal static class Program
 			}
 		}
 		if (currentWord != "")
-		{ tokens.Add(ParseCurrentWord(currentWord, words)); }
+		{ tokens.Add(ParseCurrentWord(currentWord, punctuation.Length, words)); }
 
 		return tokens.ToArray();
 	}
 
-	static string Detokenize(byte[] tokens, string[] words, (char character, bool spaced)[] punctuation)
+	static string Detokenize(byte[] tokens, (char character, bool spaced)[] punctuation, string[] words)
 	{
+		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
+		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
+
 		StringBuilder output = new();
 
 		bool spaceBeforeNextWord = false;
 		foreach (byte index in tokens)
 		{
-			bool isWord = index < words.Length;
+			bool isWord = index >= escapeCodeCount + punctuation.Length;
 
-			if (isWord)
+			if (index < escapeCodeCount)
+			{
+				throw new NotImplementedException("Escape codes not yet implemented");
+			}
+			else if (index < escapeCodeCount + punctuation.Length)
+			{
+				// todo: add safety to ensure that the index isn't greater or equal to the length of punctuation and words combined with escapeCodeCount
+				(char character, bool spaced) currentPunctuation = punctuation[index - escapeCodeCount];
+
+				output.Append(currentPunctuation.character);
+				spaceBeforeNextWord = currentPunctuation.spaced;
+			}
+			else
 			{
 				if (spaceBeforeNextWord)
 				{
 					output.Append(' ');
 				}
-				output.Append(words[index]);
+				output.Append(words[index - escapeCodeCount - punctuation.Length]);
 				spaceBeforeNextWord = true;
-			}
-			else
-			{
-				// todo: add safety to ensure that the index isn't greater than the length of punctuation and words combined
-				(char character, bool spaced) currentPunctuation = punctuation[index - words.Length];
-
-				// todo: add spacing logic for Spacing.Bracket
-				output.Append(currentPunctuation.character);
-
-				spaceBeforeNextWord = currentPunctuation.spaced;
 			}
 		}
 
@@ -235,7 +243,7 @@ internal static class Program
 
 	static void Main()
 	{
-		string textPath = "nasin_lete.txt";
+		string textPath = "aseki_laso_en_jan_utala_lipu_wan.txt";
 		
 		string text = File.ReadAllText(textPath);
 
@@ -246,12 +254,12 @@ internal static class Program
 
 		byte? minimumPairIndex = (byte)(words.Length + punctuation.Length);
 		
-		byte[] tokens = Tokenize(text, words, punctuation);
+		byte[] tokens = Tokenize(text, punctuation, words);
 		byte[] compressed = Compress(tokens, minimumPairIndex);
 
 		File.WriteAllBytes($"{textPath}.toki", compressed);
 
-		Console.WriteLine(Detokenize(Decompress(compressed, minimumPairIndex), words, punctuation));
+		Console.WriteLine(Detokenize(Decompress(compressed, minimumPairIndex), punctuation, words));
 
 		Console.Read(); // pause until enter
 	}
