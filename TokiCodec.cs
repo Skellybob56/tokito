@@ -5,11 +5,18 @@ namespace Tokito;
 
 internal static class TokiCodex
 {
-    const int escapeCodeCount = 4; // todo: split tokenizer into its own class to encapsulate this const
+	// todo: load these from data files
+	// todo: make SpaceableChar struct to improve readability
+    const int escapeCodeCount = 4;
+    static readonly (char character, bool spaced)[] punctuation = [('\n', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
+	static readonly string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "pu", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
+    
+    static readonly int tokenCount = escapeCodeCount + punctuation.Length + words.Length; // todo: add safety that ensures that this is <= 256
+    public static readonly byte? minimumPairIndex = tokenCount < 256? (byte)tokenCount : null;
 
-	// todo: add options for how lossy encoding should be
+    // todo: add options for how lossy encoding should be
 	// todo: add capability for encoding losslessly (implement escape codes)
-	public static byte[] Tokenize(string text, (char character, bool spaced)[] punctuation, string[] words)
+	public static byte[] Tokenize(string text)
 	{
 		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
 		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
@@ -61,7 +68,7 @@ internal static class TokiCodex
 		return tokens.ToArray();
 	}
 
-	public static string Detokenize(byte[] tokens, (char character, bool spaced)[] punctuation, string[] words)
+	public static string Detokenize(byte[] tokens)
 	{
 		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
 		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
