@@ -1,107 +1,9 @@
-﻿
-using System.Diagnostics;
-using System.Text;
+﻿using System.Diagnostics;
 
 namespace Tokito;
 
 internal static class Program
 {
-	// todo: add options for how lossy encoding should be
-	// todo: add capability for encoding losslessly (part of this will be introducing special control characters)
-	// todo: consider swapping the order of punctuation and words in the index encoding as punctuation is more stable and more stable tokens should have lower indices
-	const int escapeCodeCount = 4; // todo: split tokenizer into its own class to encapsulate this const
-
-	// todo: implement escape codes
-	static byte[] Tokenize(string text, (char character, bool spaced)[] punctuation, string[] words)
-	{
-		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
-		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
-
-		static byte ParseCurrentWord(string currentWord, int punctuationLength, string[] words)
-		{
-			if (words.Contains(currentWord))
-			{ return (byte) (escapeCodeCount + punctuationLength + words.IndexOf(currentWord)); }
-
-			throw new NotImplementedException("unknown word");
-		}
-
-		List<byte> tokens = [];
-		
-		string currentWord = "";
-		foreach (char character in text)
-		{
-			if (character >= 'a' && character <= 'z')
-			{
-				currentWord += character;
-			}
-			else
-			{
-				if (currentWord != "")
-				{
-					tokens.Add(ParseCurrentWord(currentWord, punctuation.Length, words));
-					currentWord = "";
-				}
-
-				if (character == ' ')
-				{
-					// todo: check if this space is predicted: if not then add the missing space as a token
-					// todo: also check if a space is predicted in an area where there should be no space and use some method to supress it. example: 'ona.mi'
-				}
-				else if (character == '\r') { } // silently ignores \r
-				else if (punctuation.Any(p => p.character == character))
-				{
-					tokens.Add((byte)(escapeCodeCount + Array.FindIndex(punctuation, p => p.character == character)));
-				}
-				else
-				{
-					throw new NotImplementedException("unknown symbol"); // causes a feature regression but is more honest. this regression is needed for future lossless encoding
-				}
-			}
-		}
-		if (currentWord != "")
-		{ tokens.Add(ParseCurrentWord(currentWord, punctuation.Length, words)); }
-
-		return tokens.ToArray();
-	}
-
-	static string Detokenize(byte[] tokens, (char character, bool spaced)[] punctuation, string[] words)
-	{
-		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
-		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
-
-		StringBuilder output = new();
-
-		bool spaceBeforeNextWord = false;
-		foreach (byte index in tokens)
-		{
-			bool isWord = index >= escapeCodeCount + punctuation.Length;
-
-			if (index < escapeCodeCount)
-			{
-				throw new NotImplementedException("Escape codes not yet implemented");
-			}
-			else if (index < escapeCodeCount + punctuation.Length)
-			{
-				// todo: add safety to ensure that the index isn't greater or equal to the length of punctuation and words combined with escapeCodeCount
-				(char character, bool spaced) currentPunctuation = punctuation[index - escapeCodeCount];
-
-				output.Append(currentPunctuation.character);
-				spaceBeforeNextWord = currentPunctuation.spaced;
-			}
-			else
-			{
-				if (spaceBeforeNextWord)
-				{
-					output.Append(' ');
-				}
-				output.Append(words[index - escapeCodeCount - punctuation.Length]);
-				spaceBeforeNextWord = true;
-			}
-		}
-
-		return output.ToString();
-	}
-
 	// todo: make a BytePair struct to simplify syntax - replace `(byte p1, byte p2)`
 	static (byte[] tokens, (byte p1, byte p2)[] pairs) PairEncode(byte[] tokens, byte minimumPairIndex)
 	{
@@ -243,23 +145,24 @@ internal static class Program
 
 	static void Main()
 	{
-		string textPath = "aseki_laso_en_jan_utala_lipu_wan.txt";
+		string textPath = "nasin_lete.txt";
 		
 		string text = File.ReadAllText(textPath);
 
 		// todo: load these from data files
+		// todo: move these into TokiCodex (perhaps make TokiCodex non-static)
 		string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "pu", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
 		// todo: make SpacedChar struct to improve readability 
 		(char character, bool spaced)[] punctuation = [('\n', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
 
 		byte? minimumPairIndex = (byte)(words.Length + punctuation.Length);
 		
-		byte[] tokens = Tokenize(text, punctuation, words);
+		byte[] tokens = TokiCodex.Tokenize(text, punctuation, words);
 		byte[] compressed = Compress(tokens, minimumPairIndex);
 
 		File.WriteAllBytes($"{textPath}.toki", compressed);
 
-		Console.WriteLine(Detokenize(Decompress(compressed, minimumPairIndex), punctuation, words));
+		Console.WriteLine(TokiCodex.Detokenize(Decompress(compressed, minimumPairIndex), punctuation, words));
 
 		Console.Read(); // pause until enter
 	}
