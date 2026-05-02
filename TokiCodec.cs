@@ -68,7 +68,7 @@ internal static class TokiCodex
 		return tokens.ToArray();
 	}
 
-	public static string Detokenize(byte[] tokens)
+	public static string Detokenize(byte[] tokens, bool useCRLF)
 	{
 		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
 		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
@@ -88,6 +88,9 @@ internal static class TokiCodex
 			{
 				// todo: add safety to ensure that the index isn't greater or equal to the length of punctuation and words combined with escapeCodeCount
 				(char character, bool spaced) currentPunctuation = punctuation[index - escapeCodeCount];
+
+				if (useCRLF && currentPunctuation.character == '\n')
+				{ output.Append('\r'); }
 
 				output.Append(currentPunctuation.character);
 				spaceBeforeNextWord = currentPunctuation.spaced;
