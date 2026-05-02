@@ -77,7 +77,7 @@ internal static class Program
 		return (linkedTokens.ToArray(), pairs.ToArray());
 	}
 
-	static byte[] GenerateHeader((byte p1, byte p2)[] pairs)
+	static byte[] SerializePairs((byte p1, byte p2)[] pairs)
 	{
 		if (pairs.Length > byte.MaxValue)
 		{ throw new ArgumentException("The current format does not allow for more than 255 pairs", nameof(pairs)); }
@@ -98,7 +98,7 @@ internal static class Program
 		if (minimumPairIndex is not null)
 		{
 			(tokens, (byte p1, byte p2)[] pairs) = PairEncode(tokens, minimumPairIndex.Value);
-			byte[] header = GenerateHeader(pairs);
+			byte[] header = SerializePairs(pairs);
 
 			byte[] compressed = new byte[header.Length + tokens.Length];
 			header.CopyTo(compressed, 0);
