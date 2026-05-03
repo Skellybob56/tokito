@@ -34,16 +34,20 @@ From here, what we can do is scan every character while encoding the file. If th
  - has an end string key
 
 #### UTF-8 string
- - followed by a length byte for the UTF-8 string length
- - after that there is an array of UTF-8 characters
+ - followed by a length token for the UTF-8 string length in bytes
+ - the first length token is one byte in size
+ - if the current length token is its maximum value, then it will be followed by another token of double the size for the real length. this rule applies iteratively to allow for strings of arbitrary length.
+ - after that there is an array of encoded UTF-8 bytes
  - counts as unspaced punctuation for automatic spacing rules
- - with a string length of zero, this acts as an automatic space supressor
+ - with a string length of zero, this acts as an automatic space suppressor
 
 #### UTF-16 string
- - followed by a length byte for the UTF-16 string length
- - after that there is an array of UTF-16 characters
+ - followed by a length token for the UTF-16 string length in bytes
+ - the first length token is one byte in size
+ - if the current length token is its maximum value, then it will be followed by another token of double the size for the real length. this rule applies iteratively to allow for strings of arbitrary length.
+ - after that there is an array of encoded UTF-16 bytes
  - counts as unspaced punctuation for automatic spacing rules
- - with a string length of zero, this acts as an automatic space supressor
+ - with a string length of zero, this acts as an automatic space suppressor
 
 ## function sections
 Text
