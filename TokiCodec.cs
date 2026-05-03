@@ -6,27 +6,49 @@ namespace Tokito;
 internal static class TokiCodex
 {
 	// todo: load these from data files
-	// todo: make SpaceableChar struct to improve readability
-    const int escapeCodeCount = 4;
-    static readonly (char character, bool spaced)[] punctuation = [('\n', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
-	static readonly string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "pu", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
-    
-    static readonly int tokenCount = escapeCodeCount + punctuation.Length + words.Length; // todo: add safety that ensures that this is <= 256
-    public static readonly byte? minimumPairIndex = tokenCount < 256? (byte)tokenCount : null;
+	const int escapeCodeCount = 4;
 
-    // todo: add options for how lossy encoding should be
+	// todo: consider adding '-' along with pre-spacing capability to allow it's spacing to work
+	// todo: make SpaceableChar struct to improve readability
+	static readonly (char character, bool spaced)[] punctuation = [('\n', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
+	static readonly string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "pu", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
+	
+	static readonly int tokenCount = escapeCodeCount + punctuation.Length + words.Length; // todo: add safety that ensures that this is <= 256
+	public static readonly byte? minimumPairIndex = tokenCount < 256? (byte)tokenCount : null;
+
+	// todo: add options for how lossy encoding should be
 	// todo: add capability for encoding losslessly (implement escape codes)
 	public static byte[] Tokenize(string text)
 	{
 		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
 		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
 
-		static byte ParseCurrentWord(string currentWord, int punctuationLength, string[] words)
+		static byte[]? ParseTokiSyllables(string word) // doesn't handle spaces
 		{
-			if (words.Contains(currentWord))
-			{ return (byte) (escapeCodeCount + punctuationLength + words.IndexOf(currentWord)); }
+			throw new NotImplementedException("toki syllable encoding not implemented");
+		}
 
-			throw new NotImplementedException("unknown word");
+		static byte[] EncodeUTF8String(string word)
+		{
+			throw new NotImplementedException("UTF-8 encoding not implemented");
+		}
+
+		static byte[] ParseWord(string word, int punctuationLength, string[] words)
+		{
+			// todo: throw if word is null or empty
+
+			if (words.Contains(word))
+			{ return [(byte) (escapeCodeCount + punctuationLength + words.IndexOf(word))]; }
+
+			// todo: the encoding system currently used is wasteful with compression. for examples, interrogate these strings: "kulupukulupu", "&HELLO", "&a&"
+
+			{ // attempt to encode the word with toki syllables
+				byte[]? tokiSyllables = ParseTokiSyllables(word);
+				if (tokiSyllables is not null) { return tokiSyllables; }
+			}
+
+			// on fail attempt to encode it as a UTF-8 string (as it is alphabetic, it must fit in UTF-8)
+			return EncodeUTF8String(word);
 		}
 
 		List<byte> tokens = [];
@@ -34,7 +56,7 @@ internal static class TokiCodex
 		string currentWord = "";
 		foreach (char character in text)
 		{
-			if (character >= 'a' && character <= 'z')
+			if ((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z'))
 			{
 				currentWord += character;
 			}
@@ -42,7 +64,7 @@ internal static class TokiCodex
 			{
 				if (currentWord != "")
 				{
-					tokens.Add(ParseCurrentWord(currentWord, punctuation.Length, words));
+					tokens.AddRange(ParseWord(currentWord, punctuation.Length, words));
 					currentWord = "";
 				}
 
@@ -63,7 +85,7 @@ internal static class TokiCodex
 			}
 		}
 		if (currentWord != "")
-		{ tokens.Add(ParseCurrentWord(currentWord, punctuation.Length, words)); }
+		{ tokens.AddRange(ParseWord(currentWord, punctuation.Length, words)); }
 
 		return tokens.ToArray();
 	}
