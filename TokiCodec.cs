@@ -1,10 +1,13 @@
 
+using System.Buffers.Binary;
 using System.Text;
 
 namespace Tokito;
 
 internal static class TokiCodex
 {
+	static readonly UTF8Encoding strictUTF8Encoding = new(false, true); // do not prepend BOM, do throw on invalid bytes
+
 	// todo: load these from data files
 	const int escapeCodeCount = 4;
 
@@ -30,7 +33,35 @@ internal static class TokiCodex
 
 		static byte[] EncodeUTF8String(string word)
 		{
-			throw new NotImplementedException("UTF-8 encoding not implemented");
+			int dataByteCount = strictUTF8Encoding.GetByteCount(word);
+
+			int neededByteDepth;
+			if (dataByteCount < byte.MaxValue) // exclusive to allow for max value sentinel
+			{ neededByteDepth = 1; }
+			else if (dataByteCount < ushort.MaxValue)
+			{ neededByteDepth = 2; }
+			else { neededByteDepth = 4; }
+
+			int dataStartIndex = 2 * neededByteDepth; // 1 escape code + (2 * neededByteDepth - 1)
+
+			byte[] utf8String = new byte[dataStartIndex + dataByteCount];
+			utf8String[0] = 0x02; // UTF-8 string escape code
+			
+			// write any needed sentinels
+			for (int i = 1; i < neededByteDepth; i++)
+			{ utf8String[i] = 0xFF; }
+
+			// write length token
+			if(neededByteDepth == 1)
+			{ utf8String[neededByteDepth] = (byte)dataByteCount; }
+			else if (neededByteDepth == 2)
+			{ BinaryPrimitives.WriteUInt16LittleEndian(utf8String.AsSpan(neededByteDepth), (ushort)dataByteCount); }
+			else if (neededByteDepth == 4)
+			{ BinaryPrimitives.WriteUInt32LittleEndian(utf8String.AsSpan(neededByteDepth), (uint)dataByteCount); }
+
+			strictUTF8Encoding.GetBytes(word, utf8String.AsSpan(dataStartIndex)); // paste the bytes in at the dataStartIndex
+
+			return utf8String;
 		}
 
 		static byte[] ParseWord(string word, int punctuationLength, string[] words)

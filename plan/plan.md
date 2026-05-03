@@ -37,6 +37,7 @@ From here, what we can do is scan every character while encoding the file. If th
  - followed by a length token for the UTF-8 string length in bytes
  - the first length token is one byte in size
  - if the current length token is its maximum value, then it will be followed by another token of double the size for the real length. this rule applies iteratively to allow for strings of arbitrary length.
+ - the length tokens are unsigned little endian integers
  - after that there is an array of encoded UTF-8 bytes
  - counts as unspaced punctuation for automatic spacing rules
  - with a string length of zero, this acts as an automatic space suppressor
@@ -45,6 +46,7 @@ From here, what we can do is scan every character while encoding the file. If th
  - followed by a length token for the UTF-16 string length in bytes
  - the first length token is one byte in size
  - if the current length token is its maximum value, then it will be followed by another token of double the size for the real length. this rule applies iteratively to allow for strings of arbitrary length.
+ - the length tokens are unsigned little endian integers
  - after that there is an array of encoded UTF-16 bytes
  - counts as unspaced punctuation for automatic spacing rules
  - with a string length of zero, this acts as an automatic space suppressor
