@@ -12,22 +12,22 @@ From here, what we can do is scan every character while encoding the file. If th
 [escape codes] [punctuation] [words] [pairs]
 
 ### escape codes
-0x00 - initally capitalised toki pona syllable string
-0x01 - initally lowercase toki pona syllable string
+0x00 - initally lowercase toki pona syllable string
+0x01 - initally capitalised toki pona syllable string
 0x02 - UTF-8 string
 0x03 - UTF-16 string
 
-#### initally capitalised toki pona syllable string
+#### initally lowercase toki pona syllable string
 [capitalised space] [lowercase space] [syllables] [0xFF - end string]
- - the first syllable is capitalised
+ - the first syllable is lowercase
  - encodes all 92 valid syllables
  - has two types of spaces that either capitalise or don't capitalise the following syllable
  - counts as a spaced word for automatic spacing rules
  - has an end string key
 
-#### initally lowercase toki pona syllable string
+#### initally capitalised toki pona syllable string
 [capitalised space] [lowercase space] [syllables] [0xFF - end string]
- - the first syllable is lowercase
+ - the first syllable is capitalised
  - encodes all 92 valid syllables
  - has two types of spaces that either capitalise or don't capitalise the following syllable
  - counts as a spaced word for automatic spacing rules
