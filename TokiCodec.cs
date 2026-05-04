@@ -136,18 +136,18 @@ internal static class TokiCodex
 		StringBuilder output = new();
 
 		bool spaceBeforeNextWord = false;
-		foreach (byte index in tokens)
+		foreach (byte token in tokens)
 		{
-			bool isWord = index >= EscapeCodes.Count + punctuation.Length;
+			bool isWord = token >= EscapeCodes.Count + punctuation.Length;
 
-			if (index < EscapeCodes.Count)
+			if (token < EscapeCodes.Count)
 			{
 				throw new NotImplementedException("Escape codes not yet implemented");
 			}
-			else if (index < EscapeCodes.Count + punctuation.Length)
+			else if (token < EscapeCodes.Count + punctuation.Length)
 			{
 				// todo: add safety to ensure that the index isn't greater or equal to the length of punctuation and words combined with escapeCodeCount
-				(char character, bool spaced) currentPunctuation = punctuation[index - EscapeCodes.Count];
+				(char character, bool spaced) currentPunctuation = punctuation[token - EscapeCodes.Count];
 
 				if (useCRLF && currentPunctuation.character == '\n')
 				{ output.Append('\r'); }
@@ -161,7 +161,7 @@ internal static class TokiCodex
 				{
 					output.Append(' ');
 				}
-				output.Append(words[index - EscapeCodes.Count - punctuation.Length]);
+				output.Append(words[token - EscapeCodes.Count - punctuation.Length]);
 				spaceBeforeNextWord = true;
 			}
 		}
