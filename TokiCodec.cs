@@ -8,22 +8,29 @@ internal static class TokiCodex
 {
 	static readonly UTF8Encoding strictUTF8Encoding = new(false, true); // do not prepend BOM, do throw on invalid bytes
 
-	// todo: load these from data files
-	const int escapeCodeCount = 4;
+	static class EscapeCodes
+	{
+		public const int Count = 4; // must be manually updated
+		public const byte TokiSyllableString = 0x00;
+		public const byte CapitalizedTokiSyllableString = 0x01;
+		public const byte UTF8String = 0x02;
+		public const byte UTF16String = 0x03;
+	}
 
+	// todo: load these from data files
 	// todo: consider adding '-' along with pre-spacing capability to allow it's spacing to work
 	// todo: make SpaceableChar struct to improve readability
 	static readonly (char character, bool spaced)[] punctuation = [('\n', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
 	static readonly string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "pu", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
 	
-	static readonly int tokenCount = escapeCodeCount + punctuation.Length + words.Length; // todo: add safety that ensures that this is <= 256
+	static readonly int tokenCount = EscapeCodes.Count + punctuation.Length + words.Length; // todo: add safety that ensures that this is <= 256
 	public static readonly byte? minimumPairIndex = tokenCount < 256? (byte)tokenCount : null;
 
 	// todo: add options for how lossy encoding should be
 	// todo: add capability for encoding losslessly (implement escape codes)
 	public static byte[] Tokenize(string text)
 	{
-		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
+		if (EscapeCodes.Count + punctuation.Length + words.Length > byte.MaxValue + 1)
 		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
 
 		static byte[]? ParseTokiSyllables(string word) // doesn't handle spaces
@@ -45,7 +52,7 @@ internal static class TokiCodex
 			int dataStartIndex = 1 + (2 * neededByteDepth - 1);
 
 			byte[] utf8String = new byte[dataStartIndex + dataByteCount];
-			utf8String[0] = 0x02; // UTF-8 string escape code
+			utf8String[0] = EscapeCodes.UTF8String;
 			
 			// write any needed sentinels
 			for (int i = 1; i < neededByteDepth; i++)
@@ -69,7 +76,7 @@ internal static class TokiCodex
 			// todo: throw if word is null or empty
 
 			if (words.Contains(word))
-			{ return [(byte) (escapeCodeCount + punctuationLength + words.IndexOf(word))]; }
+			{ return [(byte) (EscapeCodes.Count + punctuationLength + words.IndexOf(word))]; }
 
 			// todo: the encoding system currently used is wasteful with compression. for examples, interrogate these strings: "kulupukulupu", "&HELLO", "&a&"
 
@@ -107,7 +114,7 @@ internal static class TokiCodex
 				else if (character == '\r') { } // silently ignores \r
 				else if (punctuation.Any(p => p.character == character))
 				{
-					tokens.Add((byte)(escapeCodeCount + Array.FindIndex(punctuation, p => p.character == character)));
+					tokens.Add((byte)(EscapeCodes.Count + Array.FindIndex(punctuation, p => p.character == character)));
 				}
 				else
 				{
@@ -123,7 +130,7 @@ internal static class TokiCodex
 
 	public static string Detokenize(byte[] tokens, bool useCRLF)
 	{
-		if (escapeCodeCount + punctuation.Length + words.Length > byte.MaxValue + 1)
+		if (EscapeCodes.Count + punctuation.Length + words.Length > byte.MaxValue + 1)
 		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
 
 		StringBuilder output = new();
@@ -131,16 +138,16 @@ internal static class TokiCodex
 		bool spaceBeforeNextWord = false;
 		foreach (byte index in tokens)
 		{
-			bool isWord = index >= escapeCodeCount + punctuation.Length;
+			bool isWord = index >= EscapeCodes.Count + punctuation.Length;
 
-			if (index < escapeCodeCount)
+			if (index < EscapeCodes.Count)
 			{
 				throw new NotImplementedException("Escape codes not yet implemented");
 			}
-			else if (index < escapeCodeCount + punctuation.Length)
+			else if (index < EscapeCodes.Count + punctuation.Length)
 			{
 				// todo: add safety to ensure that the index isn't greater or equal to the length of punctuation and words combined with escapeCodeCount
-				(char character, bool spaced) currentPunctuation = punctuation[index - escapeCodeCount];
+				(char character, bool spaced) currentPunctuation = punctuation[index - EscapeCodes.Count];
 
 				if (useCRLF && currentPunctuation.character == '\n')
 				{ output.Append('\r'); }
@@ -154,7 +161,7 @@ internal static class TokiCodex
 				{
 					output.Append(' ');
 				}
-				output.Append(words[index - escapeCodeCount - punctuation.Length]);
+				output.Append(words[index - EscapeCodes.Count - punctuation.Length]);
 				spaceBeforeNextWord = true;
 			}
 		}
