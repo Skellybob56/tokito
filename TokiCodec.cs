@@ -136,13 +136,32 @@ internal static class TokiCodex
 		StringBuilder output = new();
 
 		bool spaceBeforeNextWord = false;
-		foreach (byte token in tokens)
+		for (int i = 0; i < tokens.Length; i++)
 		{
-			bool isWord = token >= EscapeCodes.Count + punctuation.Length;
+			byte token = tokens[i];
 
 			if (token < EscapeCodes.Count)
 			{
-				throw new NotImplementedException("Escape codes not yet implemented");
+				if (token == EscapeCodes.TokiSyllableString)
+				{
+					throw new NotImplementedException("toki syllable string decoding not implemented");
+				}
+				else if (token == EscapeCodes.CapitalizedTokiSyllableString)
+				{
+					throw new NotImplementedException("capitalized toki syllable string decoding not implemented");
+				}
+				else if (token == EscapeCodes.UTF8String)
+				{
+					throw new NotImplementedException("UTF-8 string decoding not implemented");
+				}
+				else if (token == EscapeCodes.UTF16String)
+				{
+					throw new NotImplementedException("UTF-16 string decoding not implemented");
+				}
+				else
+				{
+					throw new InvalidOperationException("unknown escape code");
+				}
 			}
 			else if (token < EscapeCodes.Count + punctuation.Length)
 			{
