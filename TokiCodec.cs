@@ -42,7 +42,7 @@ internal static class TokiCodex
 			{ neededByteDepth = 2; }
 			else { neededByteDepth = 4; }
 
-			int dataStartIndex = 2 * neededByteDepth; // 1 escape code + (2 * neededByteDepth - 1)
+			int dataStartIndex = 1 + (2 * neededByteDepth - 1);
 
 			byte[] utf8String = new byte[dataStartIndex + dataByteCount];
 			utf8String[0] = 0x02; // UTF-8 string escape code
@@ -59,7 +59,7 @@ internal static class TokiCodex
 			else if (neededByteDepth == 4)
 			{ BinaryPrimitives.WriteUInt32LittleEndian(utf8String.AsSpan(neededByteDepth), (uint)dataByteCount); }
 
-			strictUTF8Encoding.GetBytes(word, utf8String.AsSpan(dataStartIndex)); // paste the bytes in at the dataStartIndex
+			strictUTF8Encoding.GetBytes(word, utf8String.AsSpan(dataStartIndex)); // paste the string bytes in at the dataStartIndex
 
 			return utf8String;
 		}
