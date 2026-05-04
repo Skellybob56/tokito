@@ -152,7 +152,27 @@ internal static class TokiCodex
 				}
 				else if (token == EscapeCodes.UTF8String)
 				{
-					throw new NotImplementedException("UTF-8 string decoding not implemented");
+					// load length value
+					i++;
+					uint length = tokens[i];
+					i++;
+					if (length == byte.MaxValue)
+					{
+						length = BinaryPrimitives.ReadUInt16LittleEndian(tokens.AsSpan(i, 2));
+						i += 2;
+						if (length == ushort.MaxValue)
+						{
+							length = BinaryPrimitives.ReadUInt32LittleEndian(tokens.AsSpan(i, 4));
+							i += 4;
+						}
+					}
+
+					// todo: consider if it is a problem that this can only get up to an int.MaxValue length string - perhaps put this in the documentation
+					// todo: could error on an invalid file (give an informative error message)
+					output.Append(strictUTF8Encoding.GetString(tokens, i, (int)length));
+					i += (int)length - 1; // move forward to the last item of the string, the for loop will move us onto the next token
+
+					spaceBeforeNextWord = false;
 				}
 				else if (token == EscapeCodes.UTF16String)
 				{
