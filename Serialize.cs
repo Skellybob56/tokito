@@ -1,11 +1,12 @@
 
 using System.Buffers.Binary;
+using System.Text;
 
 namespace Tokito;
 
 static partial class TokiCodex
 {
-	static byte[] Serialize(LogicalToken[] tokens)
+	static byte[] Serialize(SerializableToken[] tokens)
 	{
 		static byte[] EncodeUTF8String(string word)
 		{
@@ -40,6 +41,45 @@ static partial class TokiCodex
 			return utf8String;
 		}
 		
-		throw new NotImplementedException();
+		List<byte> bytes = new(tokens.Length);
+
+		StringBuilder consecutiveChars = new();
+		foreach (SerializableToken token in tokens)
+		{
+			if (token is CharToken charToken)
+			{
+				consecutiveChars.Append(charToken.Value);
+			}
+			else
+			{
+				if (consecutiveChars.Length != 0)
+				{
+					// save array
+					// todo: implement UTF-16 support
+					bytes.AddRange(EncodeUTF8String(consecutiveChars.ToString()));
+					consecutiveChars.Clear();
+				}
+
+				if (token is WordToken wordToken)
+				{ bytes.Add((byte)(EscapeCodes.Count + punctuation.Length + wordToken.WordIndex)); }
+				else if (token is PunctuationToken punctuationToken)
+				{ bytes.Add((byte)(EscapeCodes.Count + punctuationToken.PunctuationIndex)); }
+				else if (token is SpaceSupressor)
+				{
+					// zero length UTF-8 string suppresses automatic spacing
+					bytes.Add(EscapeCodes.UTF8String);
+					bytes.Add(0x00);
+				}
+			}
+		}
+		if (consecutiveChars.Length != 0)
+		{
+			// save array
+			// todo: implement UTF-16 support
+			bytes.AddRange(EncodeUTF8String(consecutiveChars.ToString()));
+			consecutiveChars.Clear();
+		}
+
+		return bytes.ToArray();
 	}
 }
