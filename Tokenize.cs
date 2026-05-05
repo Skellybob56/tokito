@@ -1,63 +1,37 @@
 
-using System.Buffers.Binary;
-using System.Text;
-
 namespace Tokito;
 
 static partial class TokiCodex
 {
 	// todo: add options for how lossy encoding should be
 	// todo: add capability for encoding losslessly (implement escape codes)
-	static byte[] Tokenize(string text)
+	static LogicalToken[] Tokenize(string text)
 	{
-		if (EscapeCodes.Count + punctuation.Length + words.Length > byte.MaxValue + 1)
-		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
-
-		static byte[] EncodeUTF8String(string word)
+		static CharToken[] WordToCharTokens(string word)
 		{
-			int dataByteCount = strictUTF8Encoding.GetByteCount(word);
+			CharToken[] charTokens = new CharToken[word.Length];
 
-			int neededByteDepth;
-			if (dataByteCount < byte.MaxValue) // exclusive to allow for max value sentinel
-			{ neededByteDepth = 1; }
-			else if (dataByteCount < ushort.MaxValue)
-			{ neededByteDepth = 2; }
-			else { neededByteDepth = 4; }
+			int i = 0;
+			foreach (char character in word)
+			{
+				charTokens[i] = new(character);
+				i++;
+			}
 
-			int dataStartIndex = 1 + (2 * neededByteDepth - 1);
-
-			byte[] utf8String = new byte[dataStartIndex + dataByteCount];
-			utf8String[0] = EscapeCodes.UTF8String;
-			
-			// write any needed sentinels
-			for (int i = 1; i < neededByteDepth; i++)
-			{ utf8String[i] = 0xFF; }
-
-			// write length token
-			if(neededByteDepth == 1)
-			{ utf8String[neededByteDepth] = (byte)dataByteCount; }
-			else if (neededByteDepth == 2)
-			{ BinaryPrimitives.WriteUInt16LittleEndian(utf8String.AsSpan(neededByteDepth), (ushort)dataByteCount); }
-			else if (neededByteDepth == 4)
-			{ BinaryPrimitives.WriteUInt32LittleEndian(utf8String.AsSpan(neededByteDepth), (uint)dataByteCount); }
-
-			strictUTF8Encoding.GetBytes(word, utf8String.AsSpan(dataStartIndex)); // paste the string bytes in at the dataStartIndex
-
-			return utf8String;
+			return charTokens;
 		}
 
-		static byte[] ParseWord(string word, int punctuationLength, string[] words)
+		static LogicalToken[] ParseWord(string word, int punctuationLength, string[] words)
 		{
 			// todo: throw if word is null or empty
 
 			if (words.Contains(word))
-			{ return [(byte) (EscapeCodes.Count + punctuationLength + words.IndexOf(word))]; }
+			{ return [new WordToken(words.IndexOf(word))]; }
 
-			// on fail attempt to encode it as a UTF-8 string (as it is alphabetic, it must fit in UTF-8)
-			return EncodeUTF8String(word);
+			return WordToCharTokens(word);
 		}
 
-		List<byte> tokens = [];
+		List<LogicalToken> tokens = [];
 		
 		string currentWord = "";
 		foreach (char character in text)
@@ -82,11 +56,12 @@ static partial class TokiCodex
 				else if (character == '\r') { } // silently ignores \r
 				else if (punctuation.Any(p => p.character == character))
 				{
-					tokens.Add((byte)(EscapeCodes.Count + Array.FindIndex(punctuation, p => p.character == character)));
+					tokens.Add(new PunctuationToken(Array.FindIndex(punctuation, p => p.character == character)));
 				}
 				else
 				{
-					throw new NotImplementedException("unknown symbol"); // causes a feature regression but is more honest. this regression is needed for future lossless encoding
+					// add unknown characters as char tokens
+					tokens.Add(new CharToken(character));
 				}
 			}
 		}
