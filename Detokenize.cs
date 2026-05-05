@@ -6,7 +6,7 @@ namespace Tokito;
 
 static partial class TokiCodex
 {
-	public static string Detokenize(byte[] tokens, bool useCRLF)
+	static string Detokenize(byte[] tokens, bool useCRLF)
 	{
 		if (EscapeCodes.Count + punctuation.Length + words.Length > byte.MaxValue + 1)
 		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }

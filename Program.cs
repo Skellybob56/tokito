@@ -14,7 +14,7 @@ internal static class Program
 		string text = File.ReadAllText(textPath);
 
 		// todo: future - remove debugging and messy code
-		byte[] tokens = TokiCodex.Tokenize(text);
+		byte[] tokens = TokiCodex.Encode(text);
 		byte[] compressed = ByteCodex.Compress((byte[])tokens.Clone(), TokiCodex.minimumPairIndex);
 
 		File.WriteAllBytes($"{textPath}.toki", compressed);
@@ -24,7 +24,7 @@ internal static class Program
 		byte[] decompressed = ByteCodex.Decompress(compressed, TokiCodex.minimumPairIndex);
 		
 		Debug.Assert(decompressed.SequenceEqual(tokens), "Decompressed data should be equivalent to the original tokens");
-		Debug.Assert(TokiCodex.Detokenize(tokens, useCRLF) == text, "Untokenized tokens should be equivalent to the original text");
+		Debug.Assert(TokiCodex.Decode(tokens, useCRLF) == text, "Untokenized tokens should be equivalent to the original text");
 
 		Console.Read(); // pause until enter
 	}

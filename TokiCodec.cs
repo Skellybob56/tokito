@@ -24,4 +24,14 @@ static partial class TokiCodex
 	
 	static readonly int tokenCount = EscapeCodes.Count + punctuation.Length + words.Length; // todo: add safety that ensures that this is <= 256
 	public static readonly byte? minimumPairIndex = tokenCount < 256? (byte)tokenCount : null;
+
+	public static byte[] Encode(string text)
+	{
+		return Tokenize(text);
+	}
+
+	public static string Decode(byte[] encoded, bool useCRLF)
+	{
+		return Detokenize(encoded, useCRLF);
+	}
 }
