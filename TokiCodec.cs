@@ -33,11 +33,6 @@ internal static class TokiCodex
 		if (EscapeCodes.Count + punctuation.Length + words.Length > byte.MaxValue + 1)
 		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
 
-		static byte[]? ParseTokiSyllables(string word) // doesn't handle spaces
-		{
-			throw new NotImplementedException("toki syllable encoding not implemented");
-		}
-
 		static byte[] EncodeUTF8String(string word)
 		{
 			int dataByteCount = strictUTF8Encoding.GetByteCount(word);
@@ -77,13 +72,6 @@ internal static class TokiCodex
 
 			if (words.Contains(word))
 			{ return [(byte) (EscapeCodes.Count + punctuationLength + words.IndexOf(word))]; }
-
-			// todo: the encoding system currently used is wasteful with compression. for examples, interrogate these strings: "kulupukulupu", "&HELLO", "&a&"
-
-			{ // attempt to encode the word with toki syllables
-				byte[]? tokiSyllables = ParseTokiSyllables(word);
-				if (tokiSyllables is not null) { return tokiSyllables; }
-			}
 
 			// on fail attempt to encode it as a UTF-8 string (as it is alphabetic, it must fit in UTF-8)
 			return EncodeUTF8String(word);
