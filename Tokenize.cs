@@ -1,11 +1,13 @@
 
+using System.Collections.ObjectModel;
+
 namespace Tokito;
 
 static partial class TokiCodex
 {
 	// todo: add options for how lossy encoding should be
 	// todo: add capability for encoding losslessly (implement escape codes)
-	static LogicalToken[] Tokenize(string text)
+	static SerializableToken[] Tokenize(string text)
 	{
 		static CharToken[] WordToCharTokens(string word)
 		{
@@ -21,7 +23,7 @@ static partial class TokiCodex
 			return charTokens;
 		}
 
-		static LogicalToken[] ParseWord(string word, int punctuationLength, string[] words)
+		static SerializableToken[] ParseWord(string word, int punctuationLength, string[] words)
 		{
 			// todo: throw if word is null or empty
 
@@ -31,7 +33,45 @@ static partial class TokiCodex
 			return WordToCharTokens(word);
 		}
 
-		List<LogicalToken> tokens = [];
+		static List<SerializableToken> PredictSpaces(ReadOnlyCollection<LogicalToken> unspacedTokens)
+		{
+			List<SerializableToken> serializableTokens = new(unspacedTokens.Count);
+
+			bool spaceBeforeNextWord = false;
+			bool justPredictedSpace = false;
+			for (int i = 0; i < unspacedTokens.Count; i++)
+			{
+				LogicalToken token = unspacedTokens[i];
+				if (token is SerializableToken serializableToken)
+				{
+					if (spaceBeforeNextWord && !justPredictedSpace && serializableToken.Word())
+					{
+						// a space was predicted that didn't occour
+						serializableTokens.Add(new SpaceSupressor());
+					}
+					serializableTokens.Add(serializableToken);
+					spaceBeforeNextWord = serializableToken.Spaced();
+					justPredictedSpace = false;
+				}
+				else if (token is ExplicitSpaceToken)
+				{
+					if (spaceBeforeNextWord && i < unspacedTokens.Count - 1 && unspacedTokens[i + 1].Word())
+					{
+						justPredictedSpace = true;
+					}
+					else
+					{
+						serializableTokens.Add(new CharToken(' '));
+						spaceBeforeNextWord = false;
+						justPredictedSpace = false;
+					}
+				}
+			}
+
+			return serializableTokens;
+		}
+
+		List<LogicalToken> unspacedTokens = [];
 		
 		string currentWord = "";
 		foreach (char character in text)
@@ -44,30 +84,34 @@ static partial class TokiCodex
 			{
 				if (currentWord != "")
 				{
-					tokens.AddRange(ParseWord(currentWord, punctuation.Length, words));
+					unspacedTokens.AddRange(ParseWord(currentWord, punctuation.Length, words));
 					currentWord = "";
 				}
 
 				if (character == ' ')
 				{
+					unspacedTokens.Add(new ExplicitSpaceToken());
 					// todo: check if this space is predicted: if not then add the missing space as a token
-					// todo: also check if a space is predicted in an area where there should be no space and use some method to supress it. example: 'ona.mi'
+					// todo: also check if a space is predicted in an area where there should be no space and supress it. example: 'ona.mi'
 				}
 				else if (character == '\r') { } // silently ignores \r
 				else if (punctuation.Any(p => p.character == character))
 				{
-					tokens.Add(new PunctuationToken(Array.FindIndex(punctuation, p => p.character == character)));
+					int punctuationIndex = Array.FindIndex(punctuation, p => p.character == character);
+					unspacedTokens.Add(new PunctuationToken(punctuationIndex));
 				}
 				else
 				{
 					// add unknown characters as char tokens
-					tokens.Add(new CharToken(character));
+					unspacedTokens.Add(new CharToken(character));
 				}
 			}
 		}
 		if (currentWord != "")
-		{ tokens.AddRange(ParseWord(currentWord, punctuation.Length, words)); }
+		{ unspacedTokens.AddRange(ParseWord(currentWord, punctuation.Length, words)); }
 
-		return tokens.ToArray();
+		List<SerializableToken> serializableTokens = PredictSpaces(unspacedTokens.AsReadOnly());
+
+		return serializableTokens.ToArray();
 	}
 }
