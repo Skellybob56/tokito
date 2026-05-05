@@ -8,7 +8,7 @@ internal static class Program
 	static void Main()
 	{
 		// todo: get from user input
-		string textPath = "nasin_lete.txt";
+		string textPath = "akesi_laso_en_jan_utala_lipu_nanpa_wan.txt";
 		bool useCRLF = true;
 		
 		string text = File.ReadAllText(textPath);
@@ -22,9 +22,9 @@ internal static class Program
 		Console.WriteLine("Done!");
 
 		byte[] decompressed = ByteCodex.Decompress(compressed, TokiCodex.minimumPairIndex);
-		
 		Debug.Assert(decompressed.SequenceEqual(tokens), "Decompressed data should be equivalent to the original tokens");
-		Debug.Assert(TokiCodex.Decode(tokens, useCRLF) == text, "Untokenized tokens should be equivalent to the original text");
+		string decoded = TokiCodex.Decode(tokens, useCRLF);
+		Debug.Assert(decoded == text, "Untokenized tokens should be equivalent to the original text");
 
 		Console.Read(); // pause until enter
 	}
