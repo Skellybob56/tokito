@@ -39,6 +39,6 @@ static partial class TokiCodex
 
 	public static string Decode(byte[] encoded, bool useCRLF)
 	{
-		return Detokenize(encoded, useCRLF);
+		return Detokenize(Deserialize(encoded), useCRLF);
 	}
 }
