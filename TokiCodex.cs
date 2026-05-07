@@ -9,11 +9,13 @@ static partial class TokiCodex
 
 	static class EscapeCodes
 	{
-		public const int Count = 4; // must be manually updated
-		public const byte TokiSyllableString = 0x00;
-		public const byte CapitalizedTokiSyllableString = 0x01;
-		public const byte UTF8String = 0x02;
-		public const byte UTF16String = 0x03;
+		public const int Count = 6; // must be manually updated
+		public const byte UpdatePairData = 0x00;
+		public const byte InsertSpace = 0x01;
+		public const byte TokiSyllableString = 0x02;
+		public const byte CapitalizedTokiSyllableString = 0x03;
+		public const byte UTF8String = 0x04;
+		public const byte UTF16String = 0x05;
 	}
 
 	// todo: load these from data files

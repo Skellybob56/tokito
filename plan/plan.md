@@ -30,11 +30,13 @@ With aritmetic encoding, you could also use per-file token pair coding and store
 0x04 - ASCII string
 0x05 - UTF-16 string
 
-### reintroduce pair encoding header
- - followed by a flag byte that determines which pair types should be reincoded
+### update pair data
+ - followed by a flag byte that determines which pair types should be re-encoded
+ - this is then followed by a number of pairs followed by a list of those pairs which is then repeated for each pair type that has been selected for re-encoding
 
-### space token
+### insert space
  - literally just encodes a space in one byte
+ - this token should be ignored by the space prediction algorithm to allow a double space in a place where only one space was predicted to be only one byte for no extra cost
 
 ### initally lowercase toki pona syllable string
 [capitalised space] [lowercase space] [syllables] [0xFF - end string]
