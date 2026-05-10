@@ -19,12 +19,16 @@ Use non-byte-aligned compression such as Huffman encoding or even non-bit-aligne
 Use an understanding of toki pona grammar to improve compression.
 With aritmetic encoding, you could also use per-file token pair coding and store the number of pairs using arithmetically coded unary (1 is much lower precision than 0)
 
-# tokenised format
+# compressed format
 [escape codes] [punctuation] [words] [pairs]
 
+## pair encoding
+The file starts with an encoding of pairs for tokens, syllables and ascii (in that order). Each pair set starts with a length byte that declares the number of pairs of that type (the types being tokens, syllables and ascii pairs). The following length\*2 bytes are pair data. Each pair is made of two ordered bytes - the new pair token will be substituted for these bytes recursively. By that, I mean that one pair can include a reference other pairs and they will all be unpacked sequentially.
+Later, pairs can be re-encoded by using the update pair data escape code.
+
 ## escape codes
-0x00 - reintroduce pair encoding header
-0x01 - space token
+0x00 - update pair data
+0x01 - insert space
 0x02 - initally lowercase toki pona syllable string
 0x03 - initally capitalised toki pona syllable string
 0x04 - ASCII string
@@ -32,14 +36,15 @@ With aritmetic encoding, you could also use per-file token pair coding and store
 
 ### update pair data
  - followed by a flag byte that determines which pair types should be re-encoded
- - this is then followed by a number of pairs followed by a list of those pairs which is then repeated for each pair type that has been selected for re-encoding
+ - for the flag byte, the lowest bit is tokens, the second bit is syllables and the third lowest big is ascii
+ - this is then followed by a number of pairs followed by a list of those pairs which is then repeated for each pair type that has been selected for re-encoding (ordered tokens, syllables, ascii)
 
 ### insert space
  - literally just encodes a space in one byte
  - this token should be ignored by the space prediction algorithm to allow a double space in a place where only one space was predicted to be only one byte for no extra cost
 
 ### initally lowercase toki pona syllable string
-[capitalised space] [lowercase space] [syllables] [0xFF - end string]
+[0x00 - end string] [capitalised space] [lowercase space] [syllables]
  - the first syllable is lowercase
  - encodes all 92 valid syllables
  - has two types of spaces that either capitalise or don't capitalise the following syllable
@@ -47,27 +52,24 @@ With aritmetic encoding, you could also use per-file token pair coding and store
  - has an end string key
 
 ### initally capitalised toki pona syllable string
-[capitalised space] [lowercase space] [syllables] [0xFF - end string]
+[0x00 - end string] [capitalised space] [lowercase space] [syllables] [pair encoding space]
  - the first syllable is capitalised
  - encodes all 92 valid syllables
  - has two types of spaces that either capitalise or don't capitalise the following syllable
  - counts as a spaced word for automatic spacing rules
  - has an end string key
 
-### UTF-8 string
- - followed by a length token for the UTF-8 string length in bytes
- - the first length token is one byte in size
- - if the current length token is its maximum value, then it will be followed by another token of double the size for the real length. this rule applies iteratively up to a 4 byte length token to allow for strings of great length. a 4 byte length token is always taken literally.
- - the length tokens are unsigned little endian integers
- - after that there is an array of encoded UTF-8 bytes
+### ASCII string
+ - followed by an array of ASCII bytes
+ - terminated with null (0x00)
+ - if you want to encode null, use 0x80
+ - anything above 0x80 can be used for pair encoding
  - counts as unspaced punctuation for automatic spacing rules
  - with a string length of zero, this acts as an automatic space suppressor
 
 ### UTF-16 string
- - followed by a length token for the UTF-16 string length in units of 2 bytes
- - the first length token is one byte in size
- - if the current length token is its maximum value, then it will be followed by another token of double the size for the real length. this rule applies iteratively up to a 4 byte length token to allow for strings of great length. a 4 byte length token is always taken literally.
- - the length tokens are unsigned little endian integers
- - after that there is an array of encoded UTF-16 bytes
+ - followed by an array of encoded UTF-16 bytes
+ - terminated with null (0x00)
+ - does not support pair encoding
  - counts as unspaced punctuation for automatic spacing rules
  - with a string length of zero, this acts as an automatic space suppressor
