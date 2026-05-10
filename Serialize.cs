@@ -1,5 +1,4 @@
 
-using System.Buffers.Binary;
 using System.Text;
 
 namespace Tokito;
@@ -8,37 +7,20 @@ static partial class TokiCodex
 {
 	static byte[] Serialize(SerializableToken[] tokens)
 	{
-		static byte[] EncodeUTF8String(string word)
+		static byte[] EncodeAsciiString(string word)
 		{
-			int dataByteCount = strictUTF8Encoding.GetByteCount(word);
+			int dataByteCount = asciiEncoding.GetByteCount(word);
 
-			int neededByteDepth;
-			if (dataByteCount < byte.MaxValue) // exclusive to allow for max value sentinel
-			{ neededByteDepth = 1; }
-			else if (dataByteCount < ushort.MaxValue)
-			{ neededByteDepth = 2; }
-			else { neededByteDepth = 4; }
+			byte[] asciiString = new byte[1 + dataByteCount + 1];
+			asciiString[0] = EscapeCodes.ASCIIString;
+			asciiEncoding.GetBytes(word, asciiString.AsSpan(1)); // paste the string bytes in after the escape code
+			asciiString[^1] = 0x00; // todo: tidy this null terminator into a constant somewhere
 
-			int dataStartIndex = 1 + (2 * neededByteDepth - 1);
+			// replace nulls in the text with an explicit null token
+			for (int i = 1; i < asciiString.Length - 1; i++)
+			{ if (asciiString[i] == 0x00) { asciiString[i] = 0x80; } }
 
-			byte[] utf8String = new byte[dataStartIndex + dataByteCount];
-			utf8String[0] = EscapeCodes.UTF8String;
-			
-			// write any needed sentinels
-			for (int i = 1; i < neededByteDepth; i++)
-			{ utf8String[i] = 0xFF; }
-
-			// write length token
-			if(neededByteDepth == 1)
-			{ utf8String[neededByteDepth] = (byte)dataByteCount; }
-			else if (neededByteDepth == 2)
-			{ BinaryPrimitives.WriteUInt16LittleEndian(utf8String.AsSpan(neededByteDepth), (ushort)dataByteCount); }
-			else if (neededByteDepth == 4)
-			{ BinaryPrimitives.WriteUInt32LittleEndian(utf8String.AsSpan(neededByteDepth), (uint)dataByteCount); }
-
-			strictUTF8Encoding.GetBytes(word, utf8String.AsSpan(dataStartIndex)); // paste the string bytes in at the dataStartIndex
-
-			return utf8String;
+			return asciiString;
 		}
 		
 		List<byte> bytes = new(tokens.Length);
@@ -56,7 +38,7 @@ static partial class TokiCodex
 				{
 					// save array
 					// todo: implement UTF-16 support
-					bytes.AddRange(EncodeUTF8String(consecutiveChars.ToString()));
+					bytes.AddRange(EncodeAsciiString(consecutiveChars.ToString()));
 					consecutiveChars.Clear();
 				}
 
@@ -66,8 +48,8 @@ static partial class TokiCodex
 				{ bytes.Add((byte)(EscapeCodes.Count + punctuationToken.PunctuationIndex)); }
 				else if (token is SpaceSupressor)
 				{
-					// zero length UTF-8 string suppresses automatic spacing
-					bytes.Add(EscapeCodes.UTF8String);
+					// an immediately terminated ascii string suppresses automatic spacing
+					bytes.Add(EscapeCodes.ASCIIString);
 					bytes.Add(0x00);
 				}
 			}
@@ -76,7 +58,7 @@ static partial class TokiCodex
 		{
 			// save array
 			// todo: implement UTF-16 support
-			bytes.AddRange(EncodeUTF8String(consecutiveChars.ToString()));
+			bytes.AddRange(EncodeAsciiString(consecutiveChars.ToString()));
 			consecutiveChars.Clear();
 		}
 

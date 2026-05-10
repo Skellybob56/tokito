@@ -23,37 +23,28 @@ static partial class TokiCodex
 				{
 					throw new NotImplementedException("capitalized toki syllable string decoding not implemented");
 				}
-				else if (datum == EscapeCodes.UTF8String)
+				else if (datum == EscapeCodes.ASCIIString)
 				{
-					// load length value
 					i++;
-					uint length = data[i];
-					i++;
-					if (length == byte.MaxValue)
-					{
-						length = BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(i, 2));
-						i += 2;
-						if (length == ushort.MaxValue)
-						{
-							length = BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(i, 4));
-							i += 4;
-						}
-					}
+					List<byte> asciiBytes = [];
+					for (; data[i] != 0x00; i++) // todo: could error on an invalid file (if file ends before null terminator)
+					{ asciiBytes.Add(data[i]); }
 
-					if (length == 0)
+					// return the null tokens to be 0x00
+					for (int j = 0; j < asciiBytes.Count; j++)
+					{ if (asciiBytes[j] == 0x80) { asciiBytes[j] = 0x00; } }
+
+					if (asciiBytes.Count == 0)
 					{
 						serializableTokens.Add(new SpaceSupressor());
-						i--; // move back onto the last length byte
 					}
 					else
 					{
-						// todo: consider if it is a problem that this can only get up to an int.MaxValue length string - perhaps put this in the documentation
 						// todo: could error on an invalid file (give an informative error message)
 						serializableTokens.AddRange(
-							strictUTF8Encoding.GetString(data, i, (int)length)
+							asciiEncoding.GetString(asciiBytes.ToArray())
 								.Select(c => new CharToken(c))
 							);
-						i += (int)length - 1; // move forward to the last item of the string, the for loop will move us onto the next token
 					}
 
 				}

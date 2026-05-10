@@ -5,7 +5,8 @@ namespace Tokito;
 
 static partial class TokiCodex
 {
-	static readonly UTF8Encoding strictUTF8Encoding = new(false, true); // do not prepend BOM, do throw on invalid bytes
+	static readonly ASCIIEncoding asciiEncoding = new();
+	static readonly UnicodeEncoding strictUTF16Encoding = new(false, false, true); // use little endian, do not prepend BOM, do throw on invalid bytes
 
 	static class EscapeCodes
 	{
@@ -14,7 +15,7 @@ static partial class TokiCodex
 		public const byte InsertSpace = 0x01;
 		public const byte TokiSyllableString = 0x02;
 		public const byte CapitalizedTokiSyllableString = 0x03;
-		public const byte UTF8String = 0x04;
+		public const byte ASCIIString = 0x04;
 		public const byte UTF16String = 0x05;
 	}
 
