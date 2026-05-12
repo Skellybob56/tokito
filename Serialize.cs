@@ -7,22 +7,6 @@ static partial class TokiCodex
 {
 	static byte[] Serialize(SerializableToken[] tokens)
 	{
-		static byte[] EncodeAsciiString(string word)
-		{
-			int dataByteCount = asciiEncoding.GetByteCount(word);
-
-			byte[] asciiString = new byte[1 + dataByteCount + 1];
-			asciiString[0] = EscapeCodes.ASCIIString;
-			asciiEncoding.GetBytes(word, asciiString.AsSpan(1)); // paste the string bytes in after the escape code
-			asciiString[^1] = 0x00; // todo: tidy this null terminator into a constant somewhere
-
-			// replace nulls in the text with an explicit null token
-			for (int i = 1; i < asciiString.Length - 1; i++)
-			{ if (asciiString[i] == 0x00) { asciiString[i] = 0x80; } }
-
-			return asciiString;
-		}
-		
 		List<byte> bytes = new(tokens.Length);
 
 		StringBuilder consecutiveChars = new();
@@ -63,5 +47,21 @@ static partial class TokiCodex
 		}
 
 		return bytes.ToArray();
+
+		static byte[] EncodeAsciiString(string word)
+		{
+			int dataByteCount = asciiEncoding.GetByteCount(word);
+
+			byte[] asciiString = new byte[1 + dataByteCount + 1];
+			asciiString[0] = EscapeCodes.ASCIIString;
+			asciiEncoding.GetBytes(word, asciiString.AsSpan(1)); // paste the string bytes in after the escape code
+			asciiString[^1] = 0x00; // todo: tidy this null terminator into a constant somewhere
+
+			// replace nulls in the text with an explicit null token
+			for (int i = 1; i < asciiString.Length - 1; i++)
+			{ if (asciiString[i] == 0x00) { asciiString[i] = 0x80; } }
+
+			return asciiString;
+		}
 	}
 }

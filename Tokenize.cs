@@ -9,68 +9,6 @@ static partial class TokiCodex
 	// todo: add capability for encoding losslessly (implement escape codes)
 	static SerializableToken[] Tokenize(string text)
 	{
-		static CharToken[] WordToCharTokens(string word)
-		{
-			CharToken[] charTokens = new CharToken[word.Length];
-
-			int i = 0;
-			foreach (char character in word)
-			{
-				charTokens[i] = new(character);
-				i++;
-			}
-
-			return charTokens;
-		}
-
-		static SerializableToken[] ParseWord(string word, int punctuationLength, string[] words)
-		{
-			// todo: throw if word is null or empty
-
-			if (words.Contains(word))
-			{ return [new WordToken(words.IndexOf(word))]; }
-
-			return WordToCharTokens(word);
-		}
-
-		static List<SerializableToken> PredictSpaces(ReadOnlyCollection<LogicalToken> unspacedTokens)
-		{
-			List<SerializableToken> serializableTokens = new(unspacedTokens.Count);
-
-			bool spaceBeforeNextWord = false;
-			bool justPredictedSpace = false;
-			for (int i = 0; i < unspacedTokens.Count; i++)
-			{
-				LogicalToken token = unspacedTokens[i];
-				if (token is SerializableToken serializableToken)
-				{
-					if (spaceBeforeNextWord && !justPredictedSpace && serializableToken.Word())
-					{
-						// a space was predicted that didn't occour
-						serializableTokens.Add(new SpaceSupressor());
-					}
-					serializableTokens.Add(serializableToken);
-					spaceBeforeNextWord = serializableToken.Spaced();
-					justPredictedSpace = false;
-				}
-				else if (token is ExplicitSpaceToken)
-				{
-					if (spaceBeforeNextWord && i < unspacedTokens.Count - 1 && unspacedTokens[i + 1].Word())
-					{
-						justPredictedSpace = true;
-					}
-					else
-					{
-						serializableTokens.Add(new CharToken(' '));
-						spaceBeforeNextWord = false;
-						justPredictedSpace = false;
-					}
-				}
-			}
-
-			return serializableTokens;
-		}
-
 		List<LogicalToken> unspacedTokens = [];
 		
 		string currentWord = "";
@@ -113,5 +51,67 @@ static partial class TokiCodex
 		List<SerializableToken> serializableTokens = PredictSpaces(unspacedTokens.AsReadOnly());
 
 		return serializableTokens.ToArray();
+
+		static SerializableToken[] ParseWord(string word, int punctuationLength, string[] words)
+		{
+			// todo: throw if word is null or empty
+
+			if (words.Contains(word))
+			{ return [new WordToken(words.IndexOf(word))]; }
+
+			return WordToCharTokens(word);
+		
+			static CharToken[] WordToCharTokens(string word)
+			{
+				CharToken[] charTokens = new CharToken[word.Length];
+
+				int i = 0;
+				foreach (char character in word)
+				{
+					charTokens[i] = new(character);
+					i++;
+				}
+
+				return charTokens;
+			}
+		}
+
+		static List<SerializableToken> PredictSpaces(ReadOnlyCollection<LogicalToken> unspacedTokens)
+		{
+			List<SerializableToken> serializableTokens = new(unspacedTokens.Count);
+
+			bool spaceBeforeNextWord = false;
+			bool justPredictedSpace = false;
+			for (int i = 0; i < unspacedTokens.Count; i++)
+			{
+				LogicalToken token = unspacedTokens[i];
+				if (token is SerializableToken serializableToken)
+				{
+					if (spaceBeforeNextWord && !justPredictedSpace && serializableToken.Word())
+					{
+						// a space was predicted that didn't occour
+						serializableTokens.Add(new SpaceSupressor());
+					}
+					serializableTokens.Add(serializableToken);
+					spaceBeforeNextWord = serializableToken.Spaced();
+					justPredictedSpace = false;
+				}
+				else if (token is ExplicitSpaceToken)
+				{
+					if (spaceBeforeNextWord && i < unspacedTokens.Count - 1 && unspacedTokens[i + 1].Word())
+					{
+						justPredictedSpace = true;
+					}
+					else
+					{
+						serializableTokens.Add(new CharToken(' '));
+						spaceBeforeNextWord = false;
+						justPredictedSpace = false;
+					}
+				}
+			}
+
+			return serializableTokens;
+		}
 	}
 }
