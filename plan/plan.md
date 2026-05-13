@@ -29,8 +29,8 @@ Later, pairs can be re-encoded by using the update pair data escape code.
 ## escape codes
 0x00 - update pair data
 0x01 - insert space
-0x02 - initally lowercase toki pona syllable string
-0x03 - initally capitalised toki pona syllable string
+0x02 - initially lowercase toki pona syllable string
+0x03 - initially capitalised toki pona syllable string
 0x04 - ASCII string
 0x05 - UTF-16 string
 
@@ -43,18 +43,20 @@ Later, pairs can be re-encoded by using the update pair data escape code.
  - literally just encodes a space in one byte
  - this token should be ignored by the space prediction algorithm to allow a double space in a place where only one space was predicted to be only one byte for no extra cost
 
-### initally lowercase toki pona syllable string
+### initially lowercase toki pona syllable string
 [0x00 - end string] [capitalised space] [lowercase space] [syllables]
  - the first syllable is lowercase
- - encodes all 92 valid syllables
+ - encodes 100 different syllables
+ - each syllable can be understood as a mixed radix number. the least significant digit, the coda flips between every syllable between being absent and present ordered as "-n" (with '-' meaning absent). every full cycle of the coda, the vowel advances through its cycle ordered as "aeiou". every full cycle of the the vowels, the consonant advances through its cycle "-jklmnpstw". the system has a total of 10 * 5 * 2 = 100 states. the first syllable would be "a" and the last syllable would be "wun"
  - has two types of spaces that either capitalise or don't capitalise the following syllable
  - counts as a spaced word for automatic spacing rules
  - has an end string key
 
-### initally capitalised toki pona syllable string
+### initially capitalised toki pona syllable string
 [0x00 - end string] [capitalised space] [lowercase space] [syllables] [pair encoding space]
  - the first syllable is capitalised
- - encodes all 92 valid syllables
+ - encodes all 100 different syllables
+ - each syllable can be understood as a mixed radix number. the least significant digit, the coda flips between every syllable between being absent and present ordered as "-n" (with '-' meaning absent). every full cycle of the coda, the vowel advances through its cycle ordered as "aeiou". every full cycle of the the vowels, the consonant advances through its cycle "-jklmnpstw". the system has a total of 10 * 5 * 2 = 100 states. the first syllable would be "a" and the last syllable would be "wun"
  - has two types of spaces that either capitalise or don't capitalise the following syllable
  - counts as a spaced word for automatic spacing rules
  - has an end string key
@@ -73,3 +75,17 @@ Later, pairs can be re-encoded by using the update pair data escape code.
  - does not support pair encoding
  - counts as unspaced punctuation for automatic spacing rules
  - with a string length of zero, this acts as an automatic space suppressor
+
+# todo list
+## implementation
+### features
+ - add pair compression system
+ - add toki pona string encoding/decoding
+ - add UTF-16 encoding/decoding
+ - add insert space encoding/decoding
+ - add update pair header encoding/decoding
+
+### cleanup
+ - move local functions to be consistently below the main text of the function
+
+### restructuring
