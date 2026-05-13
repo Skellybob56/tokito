@@ -33,7 +33,7 @@ static partial class TokiCodex
 				else if (token is SpaceSupressor)
 				{
 					// an immediately terminated ascii string suppresses automatic spacing
-					bytes.Add(EscapeCodes.ASCIIString);
+					bytes.Add(EscapeCodes.AsciiString);
 					bytes.Add(0x00);
 				}
 			}
@@ -53,7 +53,7 @@ static partial class TokiCodex
 			int dataByteCount = asciiEncoding.GetByteCount(word);
 
 			byte[] asciiString = new byte[1 + dataByteCount + 1];
-			asciiString[0] = EscapeCodes.ASCIIString;
+			asciiString[0] = EscapeCodes.AsciiString;
 			asciiEncoding.GetBytes(word, asciiString.AsSpan(1)); // paste the string bytes in after the escape code
 			asciiString[^1] = 0x00; // todo: tidy this null terminator into a constant somewhere
 

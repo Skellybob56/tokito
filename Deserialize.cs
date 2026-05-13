@@ -1,6 +1,4 @@
 
-using System.Buffers.Binary;
-
 namespace Tokito;
 
 static partial class TokiCodex
@@ -23,7 +21,7 @@ static partial class TokiCodex
 				{
 					throw new NotImplementedException("capitalized toki syllable string decoding not implemented");
 				}
-				else if (datum == EscapeCodes.ASCIIString)
+				else if (datum == EscapeCodes.AsciiString)
 				{
 					i++;
 					List<byte> asciiBytes = [];
@@ -48,7 +46,7 @@ static partial class TokiCodex
 					}
 
 				}
-				else if (datum == EscapeCodes.UTF16String)
+				else if (datum == EscapeCodes.Utf16String)
 				{
 					throw new NotImplementedException("UTF-16 string decoding not implemented");
 				}

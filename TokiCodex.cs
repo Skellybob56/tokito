@@ -15,8 +15,8 @@ static partial class TokiCodex
 		public const byte InsertSpace = 0x01;
 		public const byte TokiSyllableString = 0x02;
 		public const byte CapitalizedTokiSyllableString = 0x03;
-		public const byte ASCIIString = 0x04;
-		public const byte UTF16String = 0x05;
+		public const byte AsciiString = 0x04;
+		public const byte Utf16String = 0x05;
 	}
 
 	// todo: load these from data files
