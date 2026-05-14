@@ -18,10 +18,11 @@ internal static class Program
 
 		File.WriteAllBytes($"{textPath}.toki", tokens);
 
-		Console.WriteLine("Done!");
+		Console.WriteLine("Written!");
 
 		string decoded = TokiCodex.Decode(tokens, useCRLF);
-		Debug.Assert(decoded == text, "Untokenized tokens should be equivalent to the original text");
+		if (decoded == text) { Console.WriteLine("Decode success!"); }
+		else { Console.WriteLine("Decode failure."); Debug.Fail("Untokenized tokens should be equivalent to the original text"); }
 
 		Console.Read(); // pause until enter
 	}
