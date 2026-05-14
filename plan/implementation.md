@@ -13,5 +13,8 @@
  - add update pair header encoding/decoding
 
 ## structure
+### done
+ - take everything in the TokiCodex class and move it to be in a namespace
+
 ### todo
- - take everything in the TokiCodex class and move it to be in a namespace with several classes for easier encapsulation
+ - split TokiCodex into several classes for encapsualiton
