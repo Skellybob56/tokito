@@ -186,7 +186,50 @@ static partial class TokiCodex
 			ReadOnlyCollection<uint>? syllablePairFrequency,
 			ReadOnlyCollection<uint>? asciiPairFrequency)
 		{
-			throw new NotImplementedException();
+			TaggedBytePair mostFrequentPair = new(EscapeTag.Token, new(0, 0));
+			uint greatestFrequency = 0;
+
+			// todo: reduce repetition
+			if (tokenPairFrequency is not null)
+			{
+				for (int i = 0; i < tokenPairFrequency.Count; i++)
+				{
+					uint frequency = tokenPairFrequency[i];
+					if (frequency > greatestFrequency)
+					{
+						mostFrequentPair = new(EscapeTag.Token, BytePair.FromIndex(i));
+						greatestFrequency = frequency;
+					}
+				}
+			}
+
+			if (syllablePairFrequency is not null)
+			{
+				for (int i = 0; i < syllablePairFrequency.Count; i++)
+				{
+					uint frequency = syllablePairFrequency[i];
+					if (frequency > greatestFrequency)
+					{
+						mostFrequentPair = new(EscapeTag.SyllableString, BytePair.FromIndex(i));
+						greatestFrequency = frequency;
+					}
+				}
+			}
+
+			if (asciiPairFrequency is not null)
+			{
+				for (int i = 0; i < asciiPairFrequency.Count; i++)
+				{
+					uint frequency = asciiPairFrequency[i];
+					if (frequency > greatestFrequency)
+					{
+						mostFrequentPair = new(EscapeTag.AsciiString, BytePair.FromIndex(i));
+						greatestFrequency = frequency;
+					}
+				}
+			}
+
+			return (mostFrequentPair, greatestFrequency);
 		}
 
 		static void ReplaceTaggedPairAndUpdateFrequencies(byte pairIndex, TaggedBytePair pair, ref LinkedList<TaggedByte> taggedTokens,
