@@ -9,7 +9,7 @@ static partial class TokiCodex
 		public bool Spaced() => this switch
 		{
 			WordToken => true,
-			PunctuationToken pt => punctuation[pt.PunctuationIndex].spaced,
+			PunctuationToken pt => punctuation[pt.PunctuationIndex].Spaced,
 			_ => false
 		};
 

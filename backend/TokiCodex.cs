@@ -1,4 +1,5 @@
 
+using System.Collections.Immutable;
 using System.Text;
 
 namespace Tokito.Backend;
@@ -21,8 +22,12 @@ static partial class TokiCodex
 
 	// todo: load these from data files
 	// todo: consider adding '-' along with pre-spacing capability to allow it's spacing to work
-	// todo: make SpaceableChar struct to improve readability
-	static readonly (char character, bool spaced)[] punctuation = [('\n', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
+	readonly record struct SpaceableChar(char Character, bool Spaced)
+	{
+		public static implicit operator SpaceableChar((char Character, bool Spaced) origin)
+		{ return new SpaceableChar(origin.Character, origin.Spaced); }
+	}
+	static readonly ImmutableArray<SpaceableChar> punctuation = [('\n', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
 	static readonly string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kin", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "monsuta", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
 	
 	static readonly int tokenCount = EscapeCodes.Count + punctuation.Length + words.Length;

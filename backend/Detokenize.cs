@@ -25,7 +25,7 @@ static partial class TokiCodex
 			}
 			else if (token is PunctuationToken puncToken)
 			{
-				char puncChar = punctuation[puncToken.PunctuationIndex].character;
+				char puncChar = punctuation[puncToken.PunctuationIndex].Character;
 
 				if (useCRLF && puncChar == '\n')
 				{ output.Append('\r'); }

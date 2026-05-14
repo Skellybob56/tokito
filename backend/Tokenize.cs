@@ -1,4 +1,5 @@
 
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 
 namespace Tokito.Backend;
@@ -29,20 +30,27 @@ static partial class TokiCodex
 				if (character == ' ')
 				{
 					unspacedTokens.Add(new ExplicitSpaceToken());
-					// todo: check if this space is predicted: if not then add the missing space as a token
-					// todo: also check if a space is predicted in an area where there should be no space and supress it. example: 'ona.mi'
+					continue;
 				}
-				else if (character == '\r') { } // silently ignores \r
-				else if (punctuation.Any(p => p.character == character))
+				if (character == '\r') { continue; } // silently ignores \r
+				
 				{
-					int punctuationIndex = Array.FindIndex(punctuation, p => p.character == character);
-					unspacedTokens.Add(new PunctuationToken(punctuationIndex));
+					int punctuationIndex = 0;
+					bool found = false;
+					for (; punctuationIndex < punctuation.Length; punctuationIndex++)
+					{
+						if (punctuation[punctuationIndex].Character == character)
+						{ found = true; break; }
+					}
+					if (found)
+					{
+						unspacedTokens.Add(new PunctuationToken(punctuationIndex));
+						continue;
+					}
 				}
-				else
-				{
-					// add unknown characters as char tokens
-					unspacedTokens.Add(new CharToken(character));
-				}
+				
+				// add unknown characters as char tokens
+				unspacedTokens.Add(new CharToken(character));
 			}
 		}
 		if (currentWord != "")

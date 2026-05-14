@@ -72,6 +72,7 @@ static partial class TokiCodex
 
 		return serializedTokens.ToArray();
 
+		// todo: use arrays and iteration as shown here to reduce code size and complexity in other pairing code
 		static (PairCollection pairCollection, int headerSize) ReadHeader(ReadOnlyCollection<byte> compressedBytes)
 		{
 			BytePair[][] bytePairs = new BytePair[3][];
