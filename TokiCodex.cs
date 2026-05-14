@@ -30,18 +30,18 @@ static partial class TokiCodex
 
 	static TokiCodex()
 	{
-		if (EscapeCodes.Count + punctuation.Length + words.Length > byte.MaxValue + 1)
+		if (tokenCount > byte.MaxValue + 1)
 		{ throw new ArgumentException($"The current format does not allow for more than {byte.MaxValue + 1} total escape codes, punctuation and words", nameof(words) + ", " + nameof(punctuation)); }
 
 	}
 
 	public static byte[] Encode(string text)
 	{
-		return Serialize(Tokenize(text));
+		return PairEncode(Serialize(Tokenize(text)));
 	}
 
 	public static string Decode(byte[] encoded, bool useCRLF)
 	{
-		return Detokenize(Deserialize(encoded), useCRLF);
+		return Detokenize(Deserialize(PairDecode(encoded)), useCRLF);
 	}
 }

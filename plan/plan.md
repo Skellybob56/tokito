@@ -86,6 +86,6 @@ Later, pairs can be re-encoded by using the update pair data escape code.
  - add update pair header encoding/decoding
 
 ### cleanup
- - move local functions to be consistently below the main text of the function
 
 ### restructuring
+ - take everything in the TokiCodex class and move it to be in a namespace with several classes for easier encapsulation
