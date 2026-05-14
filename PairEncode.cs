@@ -119,7 +119,66 @@ static partial class TokiCodex
 
 		static FirstPassData TagTokensAndCountPairFrequency(ReadOnlyCollection<byte> serializedTokens)
 		{
-			throw new NotImplementedException();
+			LinkedList<TaggedByte> taggedTokens = [];
+
+			// warning - huge arrays
+			uint[] tokenPairFrequency = new uint[256*256];
+			uint[] syllablePairFrequency = new uint[256*256];
+			uint[] asciiPairFrequency = new uint[256*256];
+
+			EscapeTag currentEscapeTag = EscapeTag.Token;
+			for (int i = 0; i < serializedTokens.Count; i++)
+			{
+				// load current datum
+				byte datum = serializedTokens[i];
+
+				// update pair frequency
+				if (i != 0) // not the first item
+				{
+					(EscapeTag previousEscapeTag, byte previousDatum) = taggedTokens.Last!.Value; // not the first item
+					BytePair bytePair = new(previousDatum, datum);
+
+					if (previousEscapeTag == EscapeTag.Token)
+					{
+						tokenPairFrequency[bytePair.ToIndex()]++;
+					}
+					else if (previousEscapeTag == EscapeTag.SyllableString)
+					{
+						syllablePairFrequency[bytePair.ToIndex()]++;
+					}
+					else if (previousEscapeTag == EscapeTag.AsciiString)
+					{
+						asciiPairFrequency[bytePair.ToIndex()]++;
+					}
+					// EscapeTag.Utf16String is intentionally skipped
+				}
+
+				// store current datum
+				taggedTokens.AddLast(new TaggedByte(currentEscapeTag, datum));
+
+				// update currentEscapeTag
+				if (currentEscapeTag == EscapeTag.Token)
+				{
+					if (datum == EscapeCodes.TokiSyllableString || datum == EscapeCodes.CapitalizedTokiSyllableString)
+					{
+						currentEscapeTag = EscapeTag.SyllableString;
+					}
+					else if (datum == EscapeCodes.AsciiString)
+					{
+						currentEscapeTag = EscapeTag.AsciiString;
+					}
+					else if (datum == EscapeCodes.Utf16String)
+					{
+						currentEscapeTag = EscapeTag.Utf16String;
+					}
+				}
+				else if (datum == 0x00) // string end
+				{
+					currentEscapeTag = EscapeTag.Token;
+				}
+			}
+
+			return new FirstPassData(taggedTokens, tokenPairFrequency, syllablePairFrequency, asciiPairFrequency);
 		}
 
 		static (TaggedBytePair, uint frequency) MostFrequentPair(
