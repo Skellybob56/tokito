@@ -235,7 +235,103 @@ static partial class TokiCodex
 		static void ReplaceTaggedPairAndUpdateFrequencies(byte pairIndex, TaggedBytePair pair, ref LinkedList<TaggedByte> taggedTokens,
 			ref uint[] tokenPairFrequency, ref uint[] syllablePairFrequency, ref uint[] asciiPairFrequency)
 		{
-			throw new NotImplementedException();
+			for (LinkedListNode<TaggedByte>? node = taggedTokens.First; node is not null; node = node.Next)
+			{
+				if (node.Value.Tag == pair.Tag && node.Value.Value == pair.Pair.Pair1 &&
+					node.Next is not null && node.Next.Value.Value == pair.Pair.Pair2) // at the tagged pair
+				{
+					// update pair frequency
+					// todo: reduce repetition
+					if (node.Previous is not null)
+					{
+						uint[] relevantFrequencyArray;
+						if (node.Previous.Value.Tag == EscapeTag.Token)
+						{
+							relevantFrequencyArray = tokenPairFrequency;
+						}
+						else if (node.Previous.Value.Tag == EscapeTag.SyllableString)
+						{
+							relevantFrequencyArray = syllablePairFrequency;
+						}
+						else if (node.Previous.Value.Tag == EscapeTag.AsciiString)
+						{
+							relevantFrequencyArray = asciiPairFrequency;
+						}
+						else
+						{
+							throw new UnreachableException("The pair should be in a compressible escape string");
+						}
+
+						Debug.Assert(relevantFrequencyArray[BytePair.ToIndex(node.Previous.Value.Value, pair.Pair.Pair1)] != 0);
+						relevantFrequencyArray[BytePair.ToIndex(node.Previous.Value.Value, pair.Pair.Pair1)]--;
+						relevantFrequencyArray[BytePair.ToIndex(node.Previous.Value.Value, pairIndex)]++;
+					}
+
+					if (node.Next.Next is not null)
+					{
+						uint[] decrementFrequencyArray;
+						if (node.Next.Value.Tag == EscapeTag.Token)
+						{
+							decrementFrequencyArray = tokenPairFrequency;
+						}
+						else if (node.Next.Value.Tag == EscapeTag.SyllableString)
+						{
+							decrementFrequencyArray = syllablePairFrequency;
+						}
+						else if (node.Next.Value.Tag == EscapeTag.AsciiString)
+						{
+							decrementFrequencyArray = asciiPairFrequency;
+						}
+						else
+						{
+							throw new UnreachableException("The pair should be in a compressible escape string");
+						}
+						uint[] incrementFrequencyArray;
+						if (pair.Tag == EscapeTag.Token)
+						{
+							incrementFrequencyArray = tokenPairFrequency;
+						}
+						else if (pair.Tag == EscapeTag.SyllableString)
+						{
+							incrementFrequencyArray = syllablePairFrequency;
+						}
+						else if (pair.Tag == EscapeTag.AsciiString)
+						{
+							incrementFrequencyArray = asciiPairFrequency;
+						}
+						else
+						{
+							throw new UnreachableException("The pair should be in a compressible escape string");
+						}
+
+						Debug.Assert(decrementFrequencyArray[BytePair.ToIndex(pair.Pair.Pair2, node.Next.Next.Value.Value)] != 0);
+						decrementFrequencyArray[BytePair.ToIndex(pair.Pair.Pair2, node.Next.Next.Value.Value)]--;
+						incrementFrequencyArray[BytePair.ToIndex(pairIndex, node.Next.Next.Value.Value)]++;
+					}
+
+					// replace old pair with a single pair index
+					taggedTokens.Remove(node.Next);
+					node.Value = new(pair.Tag, pairIndex);
+				}
+			}
+
+			// clear replaced pair frequency
+			if (pair.Tag == EscapeTag.Token)
+			{
+				tokenPairFrequency[pair.Pair.ToIndex()] = 0;
+			}
+			else if (pair.Tag == EscapeTag.SyllableString)
+			{
+				syllablePairFrequency[pair.Pair.ToIndex()] = 0;
+			}
+			else if (pair.Tag == EscapeTag.AsciiString)
+			{
+				asciiPairFrequency[pair.Pair.ToIndex()] = 0;
+			}
+			else
+			{
+				throw new UnreachableException("The pair should be in a compressible escape string");
+			}
 		}
 
 		static byte[] DistillAndHeadTaggedTokens(LinkedList<TaggedByte> taggedTokens,
