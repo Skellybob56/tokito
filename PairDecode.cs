@@ -79,7 +79,25 @@ static partial class TokiCodex
 
 		static (PairCollection pairCollection, int headerSize) ReadHeader(ReadOnlyCollection<byte> compressedBytes)
 		{
-			throw new NotImplementedException();
+			BytePair[][] bytePairs = new BytePair[3][];
+			int pointer = 0;
+			for (int section = 0; section < bytePairs.Length; section++)
+			{
+				// load size
+				byte size = compressedBytes[pointer];
+				BytePair[] pairSet = new BytePair[size];
+
+				pointer++;
+				for (int pairIndex = 0; pairIndex < size; pairIndex++)
+				{
+					byte pair1 = compressedBytes[pointer]; pointer++;
+					byte pair2 = compressedBytes[pointer]; pointer++;
+					pairSet[pairIndex] = new(pair1, pair2);
+				}
+				bytePairs[section] = pairSet;
+			}
+
+			return (new(bytePairs[0], bytePairs[1], bytePairs[2]), pointer);
 		}
 	}
 }
