@@ -1,5 +1,5 @@
 
-namespace Tokito;
+namespace Tokito.Backend;
 
 static partial class TokiCodex
 {

@@ -1,7 +1,8 @@
 ﻿
 using System.Diagnostics;
+using Tokito.Backend;
 
-namespace Tokito;
+namespace Tokito.Frontend;
 
 internal static class Program
 {
