@@ -241,7 +241,31 @@ static partial class TokiCodex
 		static byte[] DistillAndHeadTaggedTokens(LinkedList<TaggedByte> taggedTokens,
 			List<BytePair> tokenPairs, List<BytePair> syllablePairs, List<BytePair> asciiPairs)
 		{
-			throw new NotImplementedException();
+			if (taggedTokens.First is null) { return []; }
+
+			int headerSize = 1 + tokenPairs.Count * 2 + 1 + syllablePairs.Count * 2 + 1 + asciiPairs.Count * 2;
+			byte[] compressedBytes = new byte[headerSize + taggedTokens.Count];
+
+			// serialize header
+			int i = 0;
+			foreach (List<BytePair> pairs in new[] {tokenPairs, syllablePairs, asciiPairs})
+			{
+				compressedBytes[i] = (byte)pairs.Count; i++; // should be safe
+				foreach (BytePair pair in pairs)
+				{
+					compressedBytes[i] = pair.Pair1; i++;
+					compressedBytes[i] = pair.Pair2; i++;
+				}
+			}
+
+			// fill data
+			for (LinkedListNode<TaggedByte>? node = taggedTokens.First; node is not null; node = node.Next)
+			{
+				compressedBytes[i] = node.Value.Value;
+				i++;
+			}
+
+			return compressedBytes;
 		}
 	}
 }
