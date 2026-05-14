@@ -15,14 +15,6 @@ static partial class TokiCodex
 
 	static byte[] PairEncode(byte[] serializedTokens)
 	{
-		// todo: consider doing this in a more organised manner
-		byte minTokenPairIndex = (byte)tokenCount; // potential wrap doesn't matter because tokenPairSlots will be correct (and less than one if a wrap occurs)
-		int tokenPairSlots = 256 - tokenCount;
-		const byte minSyllablePairIndex = 103;
-		const int syllablePairSlots = 256 - minSyllablePairIndex;
-		const byte minAsciiPairIndex = 0x81;
-		const int asciiPairSlots = 256 - minAsciiPairIndex;
-
 		// gather initial pair frequency info and taggedTokens
 		(LinkedList<TaggedByte> taggedTokens,
 			uint[] tokenPairFrequency,
@@ -31,7 +23,7 @@ static partial class TokiCodex
 			TagTokensAndCountPairFrequency(serializedTokens.AsReadOnly());
 
 		List<BytePair> tokenPairs = [];
-		bool tokenPairsFull = tokenPairSlots <= 0;
+		bool tokenPairsFull = minTokenPairIndex is null;
 		List<BytePair> syllablePairs = [];
 		bool syllablePairsFull = syllablePairSlots <= 0;
 		List<BytePair> asciiPairs = [];
@@ -51,7 +43,7 @@ static partial class TokiCodex
 
 			// add pair to pairs array
 			byte pairIndex;
-			if (mostFrequentPair.Tag == EscapeTag.Token)
+			if (mostFrequentPair.Tag == EscapeTag.Token && minTokenPairIndex is not null) // null check just for sanity, this should never happen
 			{
 				pairIndex = (byte)(minTokenPairIndex + tokenPairs.Count); // should be safe
 				tokenPairs.Add(mostFrequentPair.Pair);

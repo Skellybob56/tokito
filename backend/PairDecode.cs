@@ -13,11 +13,6 @@ static partial class TokiCodex
 
 	static byte[] PairDecode(byte[] compressedBytes)
 	{
-		// todo: this is a duplicate of the code at the start of PairEncode()
-		byte? minTokenPairIndex = tokenCount < 256 ? (byte)tokenCount : null;
-		const byte minSyllablePairIndex = 103;
-		const byte minAsciiPairIndex = 0x81;
-
 		(PairCollection pairCollection, int headerSize) = ReadHeader(compressedBytes.AsReadOnly());
 
 		LinkedList<byte> serializedTokens = new(compressedBytes[headerSize..]);
