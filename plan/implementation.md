@@ -1,5 +1,5 @@
 # implementation
-## features
+## backend features
 ### done
  - add base token encoding/decoding
  - add ascii string encoding/decoding
@@ -11,6 +11,14 @@
  - add UTF-16 encoding/decoding
  - add insert space encoding/decoding
  - add update pair header encoding/decoding
+
+## frontend features
+### done
+ - implement basic debugging
+
+### todo
+ - implement command line interface
+ - implement graphical user interface
 
 ## structure
 ### done
