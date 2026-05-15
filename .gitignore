@@ -2,5 +2,9 @@
 /bin/
 /obj/
 
+# caches
+tokito.csproj.lscache
+
+# misc
 /plan/original_script/
 open_in_vsc.txt

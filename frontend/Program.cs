@@ -9,15 +9,15 @@ internal static class Program
 	static void Main()
 	{
 		// todo: get from user input
-		string textPath = "akesi_laso_en_jan_utala_lipu_nanpa_wan.txt";
+		string textPath = "utf16_test.txt";
 		bool useCRLF = true;
 		
-		string text = File.ReadAllText(textPath);
+		string text = File.ReadAllText("texts\\" + textPath);
 
 		// todo: future - remove debugging and messy code
 		byte[] tokens = TokiCodex.Encode(text);
 
-		File.WriteAllBytes($"{textPath}.toki", tokens);
+		File.WriteAllBytes($"tokis\\" + textPath + ".toki", tokens);
 
 		Console.WriteLine("Written!");
 
