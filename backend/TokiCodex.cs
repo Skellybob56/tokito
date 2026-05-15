@@ -6,7 +6,7 @@ namespace Tokito.Backend;
 
 static partial class TokiCodex
 {
-	static readonly Encoding strinctAsciiEncoding = Encoding.GetEncoding(
+	static readonly Encoding strictAsciiEncoding = Encoding.GetEncoding(
 		"us-ascii", // ascii encoding that crashes when encoding/decoding non-ascii bytes
 		new EncoderExceptionFallback(), 
 		new DecoderExceptionFallback()

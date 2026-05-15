@@ -22,7 +22,7 @@ static partial class TokiCodex
 				{
 					// save array
 					// todo: implement UTF-16 support
-					bytes.AddRange(EncodeAsciiString(consecutiveChars.ToString()));
+					bytes.AddRange(EncodeString(consecutiveChars.ToString()));
 					consecutiveChars.Clear();
 				}
 
@@ -42,19 +42,22 @@ static partial class TokiCodex
 		{
 			// save array
 			// todo: implement UTF-16 support
-			bytes.AddRange(EncodeAsciiString(consecutiveChars.ToString()));
+			bytes.AddRange(EncodeString(consecutiveChars.ToString()));
 			consecutiveChars.Clear();
 		}
 
 		return bytes.ToArray();
 
+		static byte[] EncodeString(string word)
+		{
+			return Ascii.IsValid(word)? EncodeAsciiString(word) : EncodeUtf16String(word);
+		}
+
 		static byte[] EncodeAsciiString(string word)
 		{
-			int dataByteCount = strinctAsciiEncoding.GetByteCount(word);
-
-			byte[] asciiString = new byte[1 + dataByteCount + 1];
+			byte[] asciiString = new byte[1 + word.Length + 1];
 			asciiString[0] = EscapeCodes.AsciiString;
-			strinctAsciiEncoding.GetBytes(word, asciiString.AsSpan(1)); // paste the string bytes in after the escape code
+			strictAsciiEncoding.GetBytes(word, asciiString.AsSpan(1)); // paste the string bytes in after the escape code
 			asciiString[^1] = 0x00; // todo: tidy this null terminator into a constant somewhere
 
 			// replace nulls in the text with an explicit null token
@@ -62,6 +65,11 @@ static partial class TokiCodex
 			{ if (asciiString[i] == 0x00) { asciiString[i] = 0x80; } }
 
 			return asciiString;
+		}
+
+		static byte[] EncodeUtf16String(string word)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

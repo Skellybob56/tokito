@@ -40,7 +40,7 @@ static partial class TokiCodex
 					{
 						// todo: could error on an invalid file (give an informative error message)
 						serializableTokens.AddRange(
-							strinctAsciiEncoding.GetString(asciiBytes.ToArray())
+							strictAsciiEncoding.GetString(asciiBytes.ToArray())
 								.Select(c => new CharToken(c))
 							);
 					}
