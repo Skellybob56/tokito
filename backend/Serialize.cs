@@ -57,7 +57,7 @@ static partial class TokiCodex
 		{
 			byte[] asciiString = new byte[1 + word.Length + 1];
 			asciiString[0] = EscapeCodes.AsciiString;
-			strictAsciiEncoding.GetBytes(word, asciiString.AsSpan(1)); // paste the string bytes in after the escape code
+			asciiEncodingStrict.GetBytes(word, asciiString.AsSpan(1)); // paste the string bytes in after the escape code
 			asciiString[^1] = 0x00; // todo: tidy this null terminator into a constant somewhere
 
 			// replace nulls in the text with an explicit null token

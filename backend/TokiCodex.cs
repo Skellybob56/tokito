@@ -6,12 +6,12 @@ namespace Tokito.Backend;
 
 static partial class TokiCodex
 {
-	static readonly Encoding strictAsciiEncoding = Encoding.GetEncoding(
+	static readonly Encoding asciiEncodingStrict = Encoding.GetEncoding(
 		"us-ascii", // ascii encoding that crashes when encoding/decoding non-ascii bytes
 		new EncoderExceptionFallback(), 
 		new DecoderExceptionFallback()
 	);
-	static readonly UnicodeEncoding strictUTF16Encoding = new(false, false, true); // use little endian, do not prepend BOM, do throw on invalid bytes
+	static readonly UnicodeEncoding utf16EncodingStrict = new(false, false, true); // use little endian, do not prepend BOM, do throw on invalid bytes
 
 	static class EscapeCodes
 	{
