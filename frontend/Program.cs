@@ -10,7 +10,6 @@ internal static class Program
 	{
 		// todo: get from user input
 		string textPath = "utf8_test.txt";
-		bool useCRLF = true;
 		
 		string text = File.ReadAllText("texts\\" + textPath);
 
@@ -21,7 +20,7 @@ internal static class Program
 
 		Console.WriteLine("Written!");
 
-		string decoded = TokiCodex.Decode(tokens, useCRLF);
+		string decoded = TokiCodex.Decode(tokens);
 		if (decoded == text) { Console.WriteLine("Decode success!"); }
 		else { Console.WriteLine("Decode failure."); Debug.Fail("Untokenized tokens should be equivalent to the original text"); }
 

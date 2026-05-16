@@ -5,7 +5,7 @@ namespace Tokito.Backend;
 
 static partial class TokiCodex
 {
-	static string Detokenize(SerializableToken[] tokens, bool useCRLF)
+	static string Detokenize(SerializableToken[] tokens)
 	{
 		StringBuilder output = new();
 
@@ -26,17 +26,10 @@ static partial class TokiCodex
 			else if (token is PunctuationToken puncToken)
 			{
 				char puncChar = punctuation[puncToken.PunctuationIndex].Character;
-
-				if (useCRLF && puncChar == '\n')
-				{ output.Append('\r'); }
-
 				output.Append(puncChar);
 			}
 			else if (token is CharToken charToken)
 			{
-				if (useCRLF && charToken.Value == '\n')
-				{ output.Append('\r'); }
-				
 				output.Append(charToken.Value);
 			}
 		}

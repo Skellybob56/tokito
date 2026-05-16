@@ -32,7 +32,6 @@ static partial class TokiCodex
 					unspacedTokens.Add(new ExplicitSpaceToken());
 					continue;
 				}
-				if (character == '\r') { continue; } // silently ignores \r
 				
 				{
 					int punctuationIndex = 0;

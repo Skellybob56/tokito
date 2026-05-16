@@ -31,7 +31,7 @@ static partial class TokiCodex
 		public static implicit operator SpaceableChar((char Character, bool Spaced) origin)
 		{ return new SpaceableChar(origin.Character, origin.Spaced); }
 	}
-	static readonly ImmutableArray<SpaceableChar> punctuation = [('\n', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
+	static readonly ImmutableArray<SpaceableChar> punctuation = [('\n', false), ('\r', false), ('.', true), (',', true), (':', true), ('"', false), ('?', true), ('!', true), ('\'', false)];
 	static readonly string[] words = ["a", "akesi", "ala", "alasa", "ale", "anpa", "ante", "anu", "awen", "e", "en", "esun", "ijo", "ike", "ilo", "insa", "jaki", "jan", "jelo", "jo", "kala", "kalama", "kama", "kasi", "ken", "kepeken", "kili", "kin", "kiwen", "ko", "kon", "kule", "kulupu", "kute", "la", "lape", "laso", "lawa", "len", "lete", "li", "lili", "linja", "lipu", "loje", "lon", "luka", "lukin", "lupa", "ma", "mama", "mani", "mi", "moku", "moli", "monsi", "monsuta", "mu", "mun", "musi", "mute", "nanpa", "nasa", "nasin", "nena", "ni", "nimi", "noka", "o", "olin", "ona", "open", "pakala", "pali", "palisa", "pan", "pana", "pi", "pilin", "pimeja", "pini", "pipi", "poka", "poki", "pona", "sama", "seli", "selo", "seme", "sewi", "sijelo", "sike", "sin", "sina", "sinpin", "sitelen", "sona", "soweli", "suli", "suno", "supa", "suwi", "tan", "taso", "tawa", "telo", "tenpo", "toki", "tomo", "tu", "unpa", "uta", "utala", "walo", "wan", "waso", "wawa", "weka", "wile"];
 	
 	static readonly int tokenCount = EscapeCodes.Count + punctuation.Length + words.Length;
@@ -54,8 +54,8 @@ static partial class TokiCodex
 		return PairEncode(Serialize(Tokenize(text)));
 	}
 
-	public static string Decode(byte[] encoded, bool useCRLF)
+	public static string Decode(byte[] encoded)
 	{
-		return Detokenize(Deserialize(PairDecode(encoded)), useCRLF);
+		return Detokenize(Deserialize(PairDecode(encoded)));
 	}
 }
