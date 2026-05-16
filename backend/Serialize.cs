@@ -21,7 +21,6 @@ static partial class TokiCodex
 				if (consecutiveChars.Length != 0)
 				{
 					// save array
-					// todo: implement UTF-16 support
 					bytes.AddRange(EncodeString(consecutiveChars.ToString()));
 					consecutiveChars.Clear();
 				}
@@ -41,7 +40,6 @@ static partial class TokiCodex
 		if (consecutiveChars.Length != 0)
 		{
 			// save array
-			// todo: implement UTF-16 support
 			bytes.AddRange(EncodeString(consecutiveChars.ToString()));
 			consecutiveChars.Clear();
 		}
@@ -50,7 +48,7 @@ static partial class TokiCodex
 
 		static byte[] EncodeString(string word)
 		{
-			return Ascii.IsValid(word)? EncodeAsciiString(word) : EncodeUtf16String(word);
+			return Ascii.IsValid(word)? EncodeAsciiString(word) : EncodeUtf8String(word);
 		}
 
 		static byte[] EncodeAsciiString(string word)
@@ -58,7 +56,7 @@ static partial class TokiCodex
 			byte[] asciiString = new byte[1 + word.Length + 1];
 			asciiString[0] = EscapeCodes.AsciiString;
 			asciiEncodingStrict.GetBytes(word, asciiString.AsSpan(1)); // paste the string bytes in after the escape code
-			asciiString[^1] = 0x00; // todo: tidy this null terminator into a constant somewhere
+			asciiString[^1] = 0x00; // todo: perhaps tidy this null terminator into a constant somewhere
 
 			// replace nulls in the text with an explicit null token
 			for (int i = 1; i < asciiString.Length - 1; i++)
@@ -67,9 +65,16 @@ static partial class TokiCodex
 			return asciiString;
 		}
 
-		static byte[] EncodeUtf16String(string word)
+		static byte[] EncodeUtf8String(string word)
 		{
-			throw new NotImplementedException();
+			// todo: this will break down with embedded nulls. create a system that allows embedded nulls to be automatically encoded as ascii 0x80
+			int dataByteCount = utf8EncodingStrict.GetByteCount(word);
+			byte[] utf8String = new byte[1 + dataByteCount + 1];
+			utf8String[0] = EscapeCodes.Utf8String;
+			utf8EncodingStrict.GetBytes(word, utf8String.AsSpan(1)); // paste the string bytes in after the escape code
+			utf8String[^1] = 0x00; // todo: perhaps tidy this null terminator into a constant somewhere
+
+			return utf8String;
 		}
 	}
 }

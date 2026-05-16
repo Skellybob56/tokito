@@ -56,9 +56,9 @@ static partial class TokiCodex
 					{
 						currentEscapeTag = EscapeTag.AsciiString;
 					}
-					else if (node.Value == EscapeCodes.Utf16String)
+					else if (node.Value == EscapeCodes.Utf8String)
 					{
-						currentEscapeTag = EscapeTag.Utf16String;
+						currentEscapeTag = EscapeTag.Utf8String;
 					}
 				}
 				else if (node.Value == 0x00) // string end

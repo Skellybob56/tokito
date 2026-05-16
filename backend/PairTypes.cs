@@ -8,7 +8,7 @@ static partial class TokiCodex
 		Token,
 		SyllableString,
 		AsciiString,
-		Utf16String
+		Utf8String
 	}
 
 	readonly record struct TaggedByte(EscapeTag Tag, byte Value);

@@ -9,7 +9,7 @@ internal static class Program
 	static void Main()
 	{
 		// todo: get from user input
-		string textPath = "utf16_test.txt";
+		string textPath = "utf8_test.txt";
 		bool useCRLF = true;
 		
 		string text = File.ReadAllText("texts\\" + textPath);

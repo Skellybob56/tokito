@@ -11,7 +11,7 @@ static partial class TokiCodex
 		new EncoderExceptionFallback(), 
 		new DecoderExceptionFallback()
 	);
-	static readonly UnicodeEncoding utf16EncodingStrict = new(false, false, true); // use little endian, do not prepend BOM, do throw on invalid bytes
+	static readonly UTF8Encoding utf8EncodingStrict = new(false, true); // do not prepend BOM, do throw on invalid bytes
 
 	static class EscapeCodes
 	{
@@ -21,7 +21,7 @@ static partial class TokiCodex
 		public const byte TokiSyllableString = 0x02;
 		public const byte CapitalizedTokiSyllableString = 0x03;
 		public const byte AsciiString = 0x04;
-		public const byte Utf16String = 0x05;
+		public const byte Utf8String = 0x05;
 	}
 
 	// todo: load these from data files

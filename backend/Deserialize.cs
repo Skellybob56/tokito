@@ -46,9 +46,9 @@ static partial class TokiCodex
 					}
 
 				}
-				else if (datum == EscapeCodes.Utf16String)
+				else if (datum == EscapeCodes.Utf8String)
 				{
-					throw new NotImplementedException("UTF-16 string decoding not implemented");
+					throw new NotImplementedException("UTF-8 string decoding not implemented");
 				}
 				else
 				{

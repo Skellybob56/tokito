@@ -61,7 +61,7 @@ static partial class TokiCodex
 				asciiPairs.Add(mostFrequentPair.Pair);
 				asciiPairsFull = asciiPairs.Count >= asciiPairSlots;
 			}
-			else // EscapeTag.Utf16String or another unknown EscapeTag
+			else // EscapeTag.Utf8String or another unknown EscapeTag
 			{
 				throw new UnreachableException("The most frequent pair should be in a compressible escape string");
 			}
@@ -112,7 +112,7 @@ static partial class TokiCodex
 					{
 						asciiPairFrequency[bytePair.ToIndex()]++;
 					}
-					// EscapeTag.Utf16String is intentionally skipped
+					// EscapeTag.Utf8String is intentionally skipped
 				}
 
 				// store current datum
@@ -129,9 +129,9 @@ static partial class TokiCodex
 					{
 						currentEscapeTag = EscapeTag.AsciiString;
 					}
-					else if (datum == EscapeCodes.Utf16String)
+					else if (datum == EscapeCodes.Utf8String)
 					{
-						currentEscapeTag = EscapeTag.Utf16String;
+						currentEscapeTag = EscapeTag.Utf8String;
 					}
 				}
 				else if (datum == 0x00) // string end
@@ -206,7 +206,7 @@ static partial class TokiCodex
 					// todo: reduce repetition
 					if (node.Previous is not null)
 					{
-						uint[] relevantFrequencyArray;
+						uint[]? relevantFrequencyArray = null;
 						if (node.Previous.Value.Tag == EscapeTag.Token)
 						{
 							relevantFrequencyArray = tokenPairFrequency;
@@ -219,19 +219,19 @@ static partial class TokiCodex
 						{
 							relevantFrequencyArray = asciiPairFrequency;
 						}
-						else
-						{
-							throw new UnreachableException("The pair should be in a compressible escape string");
-						}
+						// EscapeTag.Utf8String is intentionally skipped
 
-						Debug.Assert(relevantFrequencyArray[BytePair.ToIndex(node.Previous.Value.Value, pair.Pair.Pair1)] != 0);
-						relevantFrequencyArray[BytePair.ToIndex(node.Previous.Value.Value, pair.Pair.Pair1)]--;
-						relevantFrequencyArray[BytePair.ToIndex(node.Previous.Value.Value, pairIndex)]++;
+						if (relevantFrequencyArray is not null)
+						{
+							Debug.Assert(relevantFrequencyArray[BytePair.ToIndex(node.Previous.Value.Value, pair.Pair.Pair1)] != 0);
+							relevantFrequencyArray[BytePair.ToIndex(node.Previous.Value.Value, pair.Pair.Pair1)]--;
+							relevantFrequencyArray[BytePair.ToIndex(node.Previous.Value.Value, pairIndex)]++;
+						}
 					}
 
 					if (node.Next.Next is not null)
 					{
-						uint[] decrementFrequencyArray;
+						uint[]? decrementFrequencyArray = null;
 						if (node.Next.Value.Tag == EscapeTag.Token)
 						{
 							decrementFrequencyArray = tokenPairFrequency;
@@ -244,10 +244,8 @@ static partial class TokiCodex
 						{
 							decrementFrequencyArray = asciiPairFrequency;
 						}
-						else
-						{
-							throw new UnreachableException("The pair should be in a compressible escape string");
-						}
+						// EscapeTag.Utf8String is intentionally skipped
+						
 						uint[] incrementFrequencyArray;
 						if (pair.Tag == EscapeTag.Token)
 						{
@@ -266,8 +264,11 @@ static partial class TokiCodex
 							throw new UnreachableException("The pair should be in a compressible escape string");
 						}
 
-						Debug.Assert(decrementFrequencyArray[BytePair.ToIndex(pair.Pair.Pair2, node.Next.Next.Value.Value)] != 0);
-						decrementFrequencyArray[BytePair.ToIndex(pair.Pair.Pair2, node.Next.Next.Value.Value)]--;
+						if (decrementFrequencyArray is not null)
+						{
+							Debug.Assert(decrementFrequencyArray[BytePair.ToIndex(pair.Pair.Pair2, node.Next.Next.Value.Value)] != 0);
+							decrementFrequencyArray[BytePair.ToIndex(pair.Pair.Pair2, node.Next.Next.Value.Value)]--;
+						}
 						incrementFrequencyArray[BytePair.ToIndex(pairIndex, node.Next.Next.Value.Value)]++;
 					}
 
