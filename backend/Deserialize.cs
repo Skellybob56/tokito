@@ -44,11 +44,26 @@ static partial class TokiCodex
 								.Select(c => new CharToken(c))
 							);
 					}
-
 				}
 				else if (datum == EscapeCodes.Utf8String)
 				{
-					throw new NotImplementedException("UTF-8 string decoding not implemented");
+					i++;
+					List<byte> utf8Bytes = [];
+					for (; data[i] != 0x00; i++) // todo: could error on an invalid file (if file ends before null terminator)
+					{ utf8Bytes.Add(data[i]); }
+
+					if (utf8Bytes.Count == 0)
+					{
+						serializableTokens.Add(new SpaceSupressor());
+					}
+					else
+					{
+						// todo: could error on an invalid file (give an informative error message)
+						serializableTokens.AddRange(
+							utf8EncodingStrict.GetString(utf8Bytes.ToArray())
+								.Select(c => new CharToken(c))
+							);
+					}
 				}
 				else
 				{
