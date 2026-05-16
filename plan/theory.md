@@ -4,7 +4,7 @@ Encoding and decoding will be two step processes: conversions between text, toke
 ## tokenisation
 This will require a word dictionary and a punctuation dictionary. The punctuation dictionary encodes info on punctuation spacing.
 
-The text will be assumed to be made mostly of punctuation, spaces and known toki pona words. Any other type of text will need to be encoded as toki pona syllables, ASCII or even UTF-16.
+The text will be assumed to be made mostly of punctuation, spaces and known toki pona words. Any other type of text will need to be encoded as toki pona syllables, ASCII or UTF-8.
 
 On encoding text into characters, we must use a two step process. Firstly, we encode the text into tokens that ignore the automatic spacing rules used by decompression and then we predict these spaces and remove any that will be inferred.
 

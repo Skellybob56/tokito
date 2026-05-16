@@ -7,8 +7,8 @@
  - add pair compression system
 
 ### todo
+ - add UTF-8 encoding/decoding
  - add toki pona string encoding/decoding
- - add UTF-16 encoding/decoding
  - add insert space encoding/decoding
  - add update pair header encoding/decoding
 

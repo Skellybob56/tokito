@@ -11,7 +11,7 @@ Later, pairs can be re-encoded by using the update pair data escape code.
 0x02 - initially lowercase toki pona syllable string
 0x03 - initially capitalised toki pona syllable string
 0x04 - ASCII string
-0x05 - UTF-16 string
+0x05 - UTF-8 string
 
 ### update pair data
  - followed by a flag byte that determines which pair types should be re-encoded
@@ -48,8 +48,8 @@ Later, pairs can be re-encoded by using the update pair data escape code.
  - counts as unspaced punctuation for automatic spacing rules
  - with a string length of zero, this acts as an automatic space suppressor
 
-### UTF-16 string
- - followed by an array of encoded UTF-16 bytes
+### UTF-8 string
+ - followed by an array of encoded UTF-8 bytes
  - terminated with null (0x00)
  - does not support pair encoding
  - counts as unspaced punctuation for automatic spacing rules
